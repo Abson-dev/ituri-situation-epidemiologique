@@ -23,6 +23,12 @@ Sous Windows, double-cliquer sur [`dashboard/Lancer_tableau_de_bord.bat`](dashbo
 
 Sans base réelle, le tableau de bord démarre sur des données synthétiques, signalées par un bandeau. `Lancer_tableau_de_bord.bat --demo` force ce mode. La page « Analyse d'impact » nécessite les modèles calculés par `Rscript run_all.R --cible=article`. Voir le [guide du tableau de bord](dashboard/README.md).
 
+**Aperçu, sur données synthétiques (aucune valeur n'est réelle) :**
+
+![Page Vue d'ensemble : chiffres clés, alertes, tableau des maladies et tendances hebdomadaires](docs/captures/vue-ensemble.png)
+
+Toutes les pages sont présentées dans le [README en anglais](README.md#screenshots).
+
 ## Essai rapide, sans données réelles
 
 ```

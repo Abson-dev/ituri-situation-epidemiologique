@@ -55,8 +55,8 @@ mod_zones_server <- function(id, app, S, ids_S) {
         dplyr::select(Maladie, dplyr::all_of(sc), dplyr::all_of(paste0("Décès S", s)), `Cumul 2026`, `Décès 2026`)
       num <- setdiff(names(x), "Maladie")
       tableau(x, lignes = 30, columns = c(
-        list(Maladie = reactable::colDef(minWidth = 170)),
-        stats::setNames(lapply(num, function(.) reactable::colDef(format = reactable::colFormat(separators = TRUE, locales = "fr-FR"), na = "–", minWidth = 58, align = "right")), num)
+        list(Maladie = reactable::colDef(minWidth = 150)),
+        stats::setNames(lapply(num, function(.) reactable::colDef(format = reactable::colFormat(separators = TRUE, locales = "fr-FR"), na = "–", minWidth = 50, align = "right")), num)
       ))
     })
     output$g_palu <- plotly::renderPlotly(pl_barres(serie_province(dz(), "PALUDISME SUSP", S()), "cas", "cas suspects", app$cfg))

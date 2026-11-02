@@ -46,6 +46,28 @@ On Windows, double-click [`dashboard/Lancer_tableau_de_bord.bat`](dashboard/Lanc
 
 Without a real database, the dashboard starts on synthetic data and shows a banner. The impact page needs models computed by `Rscript run_all.R --cible=article`. See the [dashboard guide](dashboard/README.md).
 
+### Screenshots
+
+**All screenshots use synthetic data. No value shown is real, and zone names appear only to illustrate the layout.**
+
+![Overview page with key figures, alerts, disease table and weekly trends](docs/captures/vue-ensemble.png)
+
+| Diseases | Malaria |
+|---|---|
+| [![Diseases page](docs/captures/maladies.png)](docs/captures/maladies.png) | [![Malaria page](docs/captures/paludisme.png)](docs/captures/paludisme.png) |
+
+| Health zones | Ebola |
+|---|---|
+| [![Health zones page](docs/captures/zones-de-sante.png)](docs/captures/zones-de-sante.png) | [![Ebola page](docs/captures/ebola.png)](docs/captures/ebola.png) |
+
+| Data quality | Impact analysis |
+|---|---|
+| [![Data quality page](docs/captures/qualite-des-donnees.png)](docs/captures/qualite-des-donnees.png) | [![Impact analysis page](docs/captures/analyse-impact.png)](docs/captures/analyse-impact.png) |
+
+| Data |
+|---|
+| [![Data page](docs/captures/donnees.png)](docs/captures/donnees.png) |
+
 ## Pipeline
 
 ```mermaid
@@ -115,7 +137,7 @@ The demo proves that the code runs. Reproducing the real results also requires t
 ├── data/README.md            Data dictionary and required files
 ├── dashboard/                Interactive Shiny dashboard and Windows launcher
 ├── notes/                    Local weekly field notes (not versioned)
-├── docs/                     Analysis plan and reporting checklist
+├── docs/                     Analysis plan, reporting checklist, screenshots
 ├── renv.lock                 Locked dependencies
 └── .github/workflows/        Continuous verification
 ```
