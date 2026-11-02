@@ -2,6 +2,7 @@ cff-version: 1.2.0
 message: "Please cite this repository if you reuse the code. A DOI will be added on archiving."
 title: "Ituri epidemiological surveillance: automated reporting and reproducible analysis"
 type: software
+license: MIT
 authors:
   - family-names: Hema
     given-names: Aboubacar

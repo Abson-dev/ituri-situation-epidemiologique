@@ -4,7 +4,7 @@
 
 À partir de la base IDS de la DPS, ce projet produit le rapport hebdomadaire, un tableau de bord interactif et une analyse reproductible.
 
-> **État :** dépôt privé, travail en cours. Les données réelles et le texte du manuscrit restent hors du dépôt tant que leurs propriétaires n'ont pas autorisé leur diffusion. Les premiers commits contiennent du texte et des résultats provisoires : il faudra réécrire l'historique avant de rendre ce dépôt public.
+> **État :** travail en cours. Les données réelles et le texte du manuscrit restent hors du dépôt tant que leurs propriétaires n'ont pas autorisé leur diffusion.
 
 ## Tableau de bord
 
@@ -82,3 +82,7 @@ Après une mise à jour des données, les chiffres de l'article changent seuls, 
 - **Cartes :** aucune, faute de limites de zones de santé.
 - **Positivité du paludisme :** rapport confirmés/suspects, car le nombre de patients testés n'est pas dans la base.
 - **Seuils méningite et rougeole :** à valider avec la DPS (`config.yml`).
+
+## Licence
+
+Le code et la documentation de ce dépôt sont publiés sous [licence MIT](LICENSE). La licence ne couvre pas les données de surveillance, qui appartiennent à leurs propriétaires et ne sont pas diffusées ici.

@@ -2,6 +2,7 @@
 
 [![Verification](https://github.com/Abson-dev/ituri-situation-epidemiologique/actions/workflows/verification.yml/badge.svg)](https://github.com/Abson-dev/ituri-situation-epidemiologique/actions/workflows/verification.yml)
 ![R 4.5.2](https://img.shields.io/badge/R-4.5.2-276DC3)
+![Licence: MIT](https://img.shields.io/badge/licence-MIT-blue)
 ![Dependencies locked with renv](https://img.shields.io/badge/dependencies-renv-informational)
 ![Reporting: STROBE/RECORD](https://img.shields.io/badge/reporting-STROBE%20%7C%20RECORD-success)
 
@@ -13,7 +14,7 @@ An R pipeline that turns the weekly Integrated Disease Surveillance and Response
 - **An interactive dashboard** for exploring diseases, health zones, malaria confirmation, Ebola and data quality.
 - **A controlled interrupted time series analysis** of how notified routine morbidity changed with Ebola burden across 36 health zones.
 
-> **Status:** private repository, work in progress. Real data and the manuscript text are withheld until the data owners authorise their release ([data availability](#data-availability)). Early commits contain draft text and findings, so the history must be rewritten before this repository is made public.
+> **Status:** work in progress. Real data and the manuscript text are withheld until the data owners authorise their release ([data availability](#data-availability)).
 
 ## Try it without real data
 
@@ -125,4 +126,4 @@ The surveillance data belong to the Provincial Health Division (DPS) of Ituri an
 
 ## Citation and licence
 
-Citation details are in [`CITATION.cff`](CITATION.cff). **No licence has been granted yet**, so the code remains under default copyright until one is added. Contribution guidelines are in [`CONTRIBUTING.md`](CONTRIBUTING.md).
+Citation details are in [`CITATION.cff`](CITATION.cff). The code and documentation in this repository are released under the [MIT licence](LICENSE). The licence does not cover the surveillance data, which belong to their owners and are not distributed here. Contribution guidelines are in [`CONTRIBUTING.md`](CONTRIBUTING.md).
