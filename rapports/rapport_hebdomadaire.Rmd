@@ -1,0 +1,315 @@
+---
+title: "Situation épidémiologique au niveau de la province de l'Ituri"
+subtitle: "`r paste0('Semaine ', params$semaine, ' de 2026')`"
+output:
+  word_document:
+    reference_docx: ../assets/modele_msf.docx
+    fig_caption: true
+params:
+  semaine: 43
+---
+
+```{r init, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, warning = FALSE, message = FALSE, dpi = 300, dev = "ragg_png")
+options(dplyr.summarise.inform = FALSE)
+for (f in list.files(here::here("R"), full.names = TRUE)) source(f, encoding = "UTF-8")
+library(flextable)
+
+cfg <- lire_config()
+S <- as.integer(params$semaine)
+base <- trouver_base(cfg, S)
+ids_complet <- nettoyer_ids(base, cfg)
+
+# Le rapport ne voit que les données disponibles jusqu'à S (règles de rupture comprises).
+ids <- ids_complet
+ids$donnees <- dplyr::filter(ids_complet$donnees, semaine <= S)
+ids$ruptures <- detecter_ruptures_palu(ids$donnees, cfg)
+d <- ids$donnees
+if (!S %in% d$semaine) stop("Aucune donnée pour la semaine ", S)
+
+debut <- date_semaine(S, cfg)
+fin <- debut + 6
+date_fr <- function(x) {
+  mois <- c("janvier", "février", "mars", "avril", "mai", "juin", "juillet", "août", "septembre", "octobre", "novembre", "décembre")
+  paste(as.integer(format(x, "%d")), mois[as.integer(format(x, "%m"))], format(x, "%Y"))
+}
+tab_style <- function(ft, taille = 8) {
+  ft |>
+    fontsize(size = taille, part = "all") |>
+    font(fontname = "Calibri", part = "all") |>
+    bg(bg = "#FFF200", part = "header") |>
+    bold(part = "header") |>
+    border_outer(border = officer::fp_border(color = "#7F7F7F", width = 0.75), part = "all") |>
+    border_inner(border = officer::fp_border(color = "#BFBFBF", width = 0.5), part = "all") |>
+    align(align = "center", part = "all") |>
+    align(j = 1, align = "left", part = "all") |>
+    padding(padding.top = 1, padding.bottom = 1, part = "all") |>
+    set_table_properties(layout = "autofit", width = 1)
+}
+notes_semaine <- here::here(if (mode_demo()) "data/synthetic/notes" else "notes", paste0("S", S, ".md"))
+sit <- dernier_sitrep(S, cfg)
+```
+
+**Période du rapport :** semaine `r S`, du `r date_fr(debut)` au `r date_fr(fin)`\
+**Rédigé par :** `r cfg$rapport$auteur`, `r cfg$rapport$fonction` (`r cfg$rapport$email`)\
+**Date de génération :** `r date_fr(Sys.Date())`\
+**Source :** `r ids$fichier` (empreinte SHA-256 `r substr(ids$sha256, 1, 12)`…)
+
+*Projet généré automatiquement à partir de la base : à relire et à valider avant diffusion.*
+
+`r if (mode_demo()) "**DONNÉES SYNTHÉTIQUES : démonstration technique, aucune valeur n'est réelle.**"`
+
+# I. Aperçu de la maladie à virus Ebola en RDC
+
+```{r mve-texte, results="asis"}
+if (is.null(sit)) {
+  cat("**Aucun sitrep MVE disponible pour cette période** (`data/external/mve_provinces.csv`).\n")
+} else {
+  p <- sit$provinces
+  cat(sprintf("Selon le sitrep %s de l'INSP-COUSP du %s, %d zones de santé sur %d ont été touchées dans %d provinces. Au total, %s cas confirmés et %s décès ont été rapportés (létalité : %s). L'Ituri compte %s cas et %d zones touchées sur %d.\n\n",
+    p$sitrep[1], date_fr(sit$date), sum(p$zs_touchees), sum(p$zs_total), nrow(p), n_fr(sum(p$cas_confirmes)), n_fr(sum(p$deces_confirmes)),
+    pct_fr(sum(p$deces_confirmes) / sum(p$cas_confirmes)), n_fr(p$cas_confirmes[p$province == "Ituri"]),
+    p$zs_touchees[p$province == "Ituri"], p$zs_total[p$province == "Ituri"]))
+  if (sit$age_sem >= 2) {
+    cat(sprintf("**Attention : ce sitrep date de %d semaines par rapport à la période du rapport. Ajouter le sitrep récent dans `data/external/` pour actualiser les sections I et II.**\n\n", sit$age_sem))
+  }
+}
+```
+
+```{r mve-table}
+if (!is.null(sit)) {
+  x <- sit$provinces |>
+    dplyr::transmute(Province = province, `Cas confirmés` = n_fr(cas_confirmes), `Décès confirmés` = n_fr(deces_confirmes),
+                     `Létalité` = pct_fr(deces_confirmes / cas_confirmes),
+                     `ZS touchées` = sprintf("%d/%d (%s)", zs_touchees, zs_total, pct_fr(zs_touchees / zs_total)),
+                     `Nouveaux cas (24 h)` = as.character(nouveaux_24h))
+  tot <- sit$provinces
+  x <- dplyr::bind_rows(x, tibble::tibble(Province = "Total", `Cas confirmés` = n_fr(sum(tot$cas_confirmes)),
+    `Décès confirmés` = n_fr(sum(tot$deces_confirmes)), `Létalité` = pct_fr(sum(tot$deces_confirmes) / sum(tot$cas_confirmes)),
+    `ZS touchées` = sprintf("%d/%d (%s)", sum(tot$zs_touchees), sum(tot$zs_total), pct_fr(sum(tot$zs_touchees) / sum(tot$zs_total))),
+    `Nouveaux cas (24 h)` = as.character(sum(tot$nouveaux_24h))))
+  flextable(x) |> tab_style(9) |> bold(i = nrow(x), part = "body")
+}
+```
+
+# II. Aperçu de la situation en Ituri
+
+```{r mve-zs, results="asis"}
+if (!is.null(sit)) {
+  z <- sit$zones |> dplyr::filter(zs != "A_VENTILER") |> dplyr::arrange(dplyr::desc(cas))
+  top <- head(z, 3)
+  cf <- z |> dplyr::filter(cas >= 50) |> dplyr::slice_max(deces / cas, n = 1)
+  cat(sprintf("Les zones de santé de %s enregistrent le plus grand nombre de cas cumulés. Parmi les zones ayant au moins 50 cas, la létalité cumulée la plus élevée est observée à %s (%s).\n\n",
+    enumerer(nom_zone(top$zs)), nom_zone(cf$zs), pct_fr(cf$deces / cf$cas)))
+  xt <- sit$zones |> dplyr::arrange(zs == "A_VENTILER", dplyr::desc(cas)) |>
+    dplyr::mutate(Zone = dplyr::if_else(zs == "A_VENTILER", "À ventiler", nom_zone(zs)),
+                  L = dplyr::if_else(cas > 0, pct_fr(deces / cas), "–"))
+  xt <- dplyr::bind_rows(
+    dplyr::transmute(xt, `Zone de santé` = Zone, `Cas (n)` = n_fr(cas), `Décès (n)` = n_fr(deces), `Létalité` = L),
+    tibble::tibble(`Zone de santé` = "Ituri", `Cas (n)` = n_fr(sum(xt$cas)), `Décès (n)` = n_fr(sum(xt$deces)),
+                   `Létalité` = pct_fr(sum(xt$deces) / sum(xt$cas))))
+  ft <- flextable(xt) |> tab_style(8) |> bold(i = nrow(xt), part = "body")
+  flextable_to_rmd(ft)
+}
+```
+
+# III. Maladies à potentiel épidémique en Ituri
+
+## 1. Situation générale
+
+```{r tableau-general}
+codes <- unlist(cfg$tableau_principal)
+tg <- tableau_maladies(d, codes, S, cfg)
+sem_cols <- grep("^S[0-9]+$", names(tg), value = TRUE)
+x <- tg |>
+  dplyr::mutate(Maladie = libelle(maladie, cfg), dplyr::across(c(dplyr::all_of(sem_cols), dc_prec, dc_S, cumul, cumul_dc), ~ n_fr(.x))) |>
+  dplyr::select(Maladie, dplyr::all_of(sem_cols),
+                !!paste0("Décès S", S - 1L) := dc_prec, !!paste0("Décès S", S) := dc_S,
+                `Cumul 2026` = cumul, `Décès 2026` = cumul_dc)
+if (S == 32) {
+  r25 <- readr::read_csv(chemin_donnees("external/rapport_s32_reference.csv"), show_col_types = FALSE)
+  x$`Cumul 2025` <- with(r25[match(codes, r25$maladie), ], ifelse(fiable_2025 == "oui", n_fr(cumul_2025), "à vérifier"))
+  x$`Décès 2025` <- with(r25[match(codes, r25$maladie), ], ifelse(fiable_2025 == "oui", n_fr(deces_2025), "à vérifier"))
+}
+flextable(x) |> tab_style(7.5)
+```
+
+```{r tableau-autres}
+ta <- tableau_maladies(d, unlist(cfg$tableau_autres), S, cfg) |>
+  dplyr::mutate(Syndrome = libelle(maladie, cfg), dplyr::across(c(dplyr::all_of(sem_cols), dc_prec, dc_S, cumul, cumul_dc), ~ n_fr(.x))) |>
+  dplyr::select(Syndrome, dplyr::all_of(sem_cols),
+                !!paste0("Décès S", S - 1L) := dc_prec, !!paste0("Décès S", S) := dc_S,
+                `Cumul 2026` = cumul, `Décès 2026` = cumul_dc)
+flextable(ta) |> tab_style(7.5)
+```
+
+```{r comparaison-2025, results="asis"}
+if (S != 32) {
+  cat("*Comparaison à 2025 non affichée : la base 2025 n'est pas disponible ; seuls les cumuls à S32 du rapport de référence ont été transcrits.*\n")
+} else {
+  cat("*2025 : cumuls transcrits du rapport S32, non recalculables sans la base 2025. « À vérifier » signale une valeur incohérente dans ce rapport (voir `docs/anomalies_rapport_S32.md`).*\n")
+}
+```
+
+## 2. Situation spécifique
+
+```{r specifique, results="asis"}
+c_fha <- cumul_maladie(d, "FHA", S)
+c_mpx <- cumul_maladie(d, "MONKEYPOX", S)
+c_men <- cumul_maladie(d, "MENINGITE", S)
+c_dip <- cumul_maladie(d, "DIPHTERIE", S)
+c_fj <- cumul_maladie(d, "FIEVRE JAUNE", S)
+alerte_men <- alertes_meningite(d, S, cfg)
+zone_max_men <- d |> dplyr::filter(maladie == "MENINGITE") |> dplyr::group_by(zs) |> dplyr::summarise(c = sum(cas)) |> dplyr::slice_max(c, n = 1, with_ties = FALSE)
+cat(sprintf("- **Fièvre hémorragique aiguë :** %s cas et %s décès notifiés dans l'IDS depuis le début de l'année (létalité : %s). Au cours des 4 dernières semaines : %s cas. Ces chiffres sont des notifications IDS, distinctes des cas confirmés de MVE du sitrep.\n",
+  n_fr(c_fha$cas), n_fr(c_fha$deces), pct_fr(c_fha$deces / c_fha$cas),
+  n_fr(sum(d$cas[d$maladie == "FHA" & d$semaine > S - 4]))))
+cat(sprintf("- **Monkeypox :** %s cas cumulés et %s décès. Au cours des 4 dernières semaines : %s.\n",
+  n_fr(c_mpx$cas), n_fr(c_mpx$deces), texte_zones(zones_recentes(d, "MONKEYPOX", S))))
+cat(sprintf("- **Diphtérie :** %s cas suspects cumulés. Au cours des 4 dernières semaines : %s.\n",
+  n_fr(c_dip$cas), texte_zones(zones_recentes(d, "DIPHTERIE", S))))
+cat(sprintf("- **Méningite :** %s cas suspects et %s décès (létalité : %s) ; %s a rapporté le plus de cas (%s). Au cours des 4 dernières semaines : %s. %s\n",
+  n_fr(c_men$cas), n_fr(c_men$deces), pct_fr(c_men$deces / c_men$cas), nom_zone(zone_max_men$zs), n_fr(zone_max_men$c),
+  texte_zones(zones_recentes(d, "MENINGITE", S)),
+  if (nrow(alerte_men)) paste0("**Seuil franchi en S", S, " : ", enumerer(paste0(nom_zone(alerte_men$zs), " (", alerte_men$statut, ")")), ".**")
+  else paste0("Aucune zone n'a franchi le seuil d'alerte (", cfg$seuils$meningite_alerte, "/100 000/semaine) ni épidémique (", cfg$seuils$meningite_epidemique, "/100 000/semaine) en S", S, ".")))
+cat(sprintf("- **Fièvre jaune :** %s cas suspects cumulés. Au cours des 4 dernières semaines : %s.\n",
+  n_fr(c_fj$cas), texte_zones(zones_recentes(d, "FIEVRE JAUNE", S))))
+cat(sprintf("- **Choléra :** %s\n", if (!any(d$maladie == "CHOLERA" & d$cas > 0)) "aucun cas suspect notifié en 2026." else
+  paste0(n_fr(sum(d$cas[d$maladie == "CHOLERA"])), " cas suspects notifiés en 2026.")))
+```
+
+```{r fig-fha, fig.width=6.6, fig.height=3.4, fig.cap=paste0("Figure 1. Fièvre hémorragique aiguë notifiée dans l'IDS par semaine, Ituri, S1-S", S, ". Le trait pointillé marque la déclaration de l'épidémie.")}
+fig_fha(d, S, cfg)
+```
+
+# IV. Rougeole
+
+```{r rougeole, results="asis"}
+c_rg <- cumul_maladie(d, "ROUGEOLE", S)
+z_rg <- d |> dplyr::filter(maladie == "ROUGEOLE") |> dplyr::group_by(zs) |> dplyr::summarise(c = sum(cas)) |> dplyr::slice_max(c, n = 1, with_ties = FALSE)
+rec2 <- zones_recentes(d, "ROUGEOLE", S, 2)
+al <- alertes_rougeole(d, S, cfg)
+dc2 <- sum(d$deces[d$maladie == "ROUGEOLE" & d$semaine > S - 2])
+absentes <- setdiff(cfg$zones_msf, zones_recentes(d, "ROUGEOLE", S, 4)$zs)
+cat(sprintf("On note un cumul de %s cas suspects dont %s décès (létalité : %s). La zone de %s a notifié le plus de cas depuis le début de l'année (%s). Au cours des deux dernières semaines, %s cas et %s décès ont été notifiés : %s.\n\n",
+  n_fr(c_rg$cas), n_fr(c_rg$deces), pct_fr(c_rg$deces / c_rg$cas, 2), nom_zone(z_rg$zs), n_fr(z_rg$c), n_fr(sum(rec2$cas)), n_fr(dc2), texte_zones(rec2)))
+cat(if (nrow(al)) sprintf("**Seuil d'alerte franchi en S%d (dédoublement par rapport à la moyenne des %d semaines précédentes) : %s.**\n\n",
+    S, cfg$seuils$rougeole_fenetre, enumerer(paste0(nom_zone(al$zs), " (", al$cas_S, " cas)")))
+  else sprintf("À la fin de la semaine %d, aucune zone n'avait franchi le seuil d'alerte (dédoublement par rapport à la moyenne des %d semaines précédentes, au moins %d cas). Ce seuil automatique ne compare pas aux années antérieures, faute de base historique.\n\n",
+    S, cfg$seuils$rougeole_fenetre, cfg$seuils$rougeole_min_cas))
+cat(sprintf("Zones d'intervention MSF sans cas suspect au cours des quatre dernières semaines : %s.\n", enumerer(nom_zone(absentes))))
+```
+
+```{r fig-rougeole, fig.width=6.6, fig.height=2.2, fig.cap=paste0("Figure 2. Cas suspects de rougeole par semaine, Ituri, S1-S", S, ".")}
+fig_rougeole(d, S, cfg)
+```
+
+```{r notes, results="asis"}
+if (file.exists(notes_semaine)) {
+  cat("**Informations de terrain (saisies manuellement) :**\n\n")
+  cat(paste(readLines(notes_semaine, encoding = "UTF-8", warn = FALSE), collapse = "\n"), "\n")
+} else {
+  cat(sprintf("*Aucune note de terrain pour S%d : déposer `notes/S%d.md` pour l'inclure ici.*\n", S, S))
+}
+```
+
+# V. Paludisme
+
+```{r paludisme, results="asis"}
+c_s <- cumul_maladie(d, "PALUDISME SUSP", S)
+c_c <- cumul_maladie(d, "PALUDISME CONF", S)
+pos <- positivite_province(ids, S)
+ps <- pos[pos$semaine == S, ]
+pm3 <- pos[pos$semaine == S - 3L, ]
+ser <- serie_province(d, "PALUDISME CONF", S)
+cS <- ser$cas[ser$semaine == S]; cM <- ser$cas[ser$semaine == S - 3L]
+rup <- ids$ruptures |> dplyr::filter(!is.na(debut_rupture)) |> dplyr::arrange(debut_rupture)
+cat(sprintf("Depuis le début de l'année, %s cas suspects de paludisme ont été notifiés dont %s confirmés, soit un rapport confirmés/suspects de %s, et %s décès parmi les cas confirmés. Le nombre de cas confirmés est passé de %s en S%d à %s en S%d (%s %s). Ce rapport est de %s en S%d, contre %s en S%d.\n\n",
+  n_fr(c_s$cas), n_fr(c_c$cas), pct_fr(c_c$cas / c_s$cas), n_fr(c_c$deces), n_fr(cM), S - 3L, n_fr(cS), S,
+  if (cS < cM) "diminution de" else "augmentation de", pct_fr(abs(cS - cM) / cM), pct_fr(ps$brute), S, pct_fr(pm3$brute), S - 3L))
+if (nrow(rup)) {
+  cat(sprintf("**Point de vigilance : la tendance provinciale des cas confirmés ne doit pas être lue comme une baisse de la transmission sans vérification.** Dans %d zones, le nombre de confirmés s'effondre brutalement alors que les suspects se maintiennent : %s. Ce profil évoque une rupture de TDR ou un arrêt de la déclaration des confirmés ; à vérifier avec les données de stock et les équipes de zone. Hors de ces zones, le rapport confirmés/suspects est de %s en S%d (%d zones évaluables).\n\n",
+    nrow(rup), enumerer(paste0(nom_zone(rup$zs), " (depuis S", rup$debut_rupture, ")")), pct_fr(ps$corrigee), S, ps$zones_valides))
+}
+egal <- ids$ruptures$zs[ids$ruptures$conf_egal_susp]
+if (length(egal)) {
+  cat(sprintf("Dans %s, les confirmés sont égaux aux suspects sur la majorité des semaines de base : ces zones sont exclues du rapport corrigé.\n\n", enumerer(nom_zone(egal))))
+}
+```
+
+```{r fig-palu, fig.width=6.6, fig.height=5.2, fig.cap=paste0("Figure 3. Paludisme confirmé, décès et rapport confirmés/suspects par semaine, Ituri, S1-S", S, ". Le rapport est un indicateur approché : le nombre de patients testés n'est pas dans la base.")}
+fig_paludisme(ids, S, cfg)
+```
+
+# VI. Zones d'intervention de MSF-Suisse
+
+```{r zones-msf, results="asis"}
+codes_z <- c(unlist(cfg$tableau_principal), unlist(cfg$tableau_autres))
+for (i in seq_along(cfg$zones_msf)) {
+  z <- cfg$zones_msf[[i]]
+  dz <- dplyr::filter(d, zs == z)
+  cat(sprintf("\n\n## %d. Zone de santé de %s\n\n", i, nom_zone(z)))
+  dS <- dplyr::filter(dz, semaine == S)
+  if (!nrow(dS)) {
+    cat(sprintf("**Aucune donnée reçue pour la semaine %d.**\n\n", S))
+  } else {
+    top <- dS |> dplyr::filter(!maladie %in% c("PALUDISME CONF")) |> dplyr::slice_max(cas, n = 4, with_ties = FALSE) |> dplyr::filter(cas > 0)
+    cat(sprintf("Principales notifications en S%d : %s.", S, enumerer(paste0(tolower(libelle(top$maladie, cfg)), " (", n_fr(top$cas), ")"))))
+    cs <- cumul_maladie(dz, "PALUDISME SUSP", S); cc <- cumul_maladie(dz, "PALUDISME CONF", S)
+    cat(sprintf(" Depuis le début de l'année : %s cas suspects de paludisme dont %s confirmés (%s), %s décès parmi les confirmés.",
+      n_fr(cs$cas), n_fr(cc$cas), pct_fr(cc$cas / cs$cas), n_fr(cc$deces)))
+    r <- ids$ruptures[ids$ruptures$zs == z, ]
+    if (nrow(r) && !is.na(r$debut_rupture)) cat(sprintf(" **Rupture de confirmation du paludisme depuis S%d.**", r$debut_rupture))
+    cat("\n\n")
+  }
+  tz <- tableau_maladies(dz, codes_z, S, cfg) |> dplyr::filter(cumul > 0)
+  sc <- grep("^S[0-9]+$", names(tz), value = TRUE)
+  # Une ligne absente pour la semaine n'est pas un zéro confirmé : « – » plutôt que 0.
+  pres <- dz |> dplyr::filter(semaine %in% as.integer(sub("S", "", sc))) |> dplyr::mutate(col = paste0("S", semaine)) |>
+    dplyr::select(maladie, col, cas) |> tidyr::pivot_wider(names_from = col, values_from = cas)
+  x <- tz |> dplyr::select(maladie, dc_S, cumul, cumul_dc) |>
+    dplyr::left_join(pres, by = "maladie")
+  for (cl in setdiff(sc, names(x))) x[[cl]] <- NA_real_
+  x <- x |>
+    dplyr::mutate(Maladie = libelle(maladie, cfg), dplyr::across(c(dplyr::all_of(sc), dc_S, cumul, cumul_dc), ~ n_fr(.x))) |>
+    dplyr::select(Maladie, dplyr::all_of(sc), !!paste0("Décès S", S) := dc_S, `Cumul 2026` = cumul, `Décès 2026` = cumul_dc)
+  cat(sprintf("\n\nTableau %d. Zone de santé de %s, S%d (– : aucune ligne dans la base pour cette semaine).\n\n", i, nom_zone(z), S))
+  flextable_to_rmd(flextable(x) |> tab_style(7.5))
+}
+```
+
+# VII. Complétude et promptitude
+
+```{r rapportage, results="asis"}
+rz <- rapportage_zones(d, S)
+tous <- tibble::tibble(zs = sort(unique(ids_complet$donnees$zs))) |>
+  dplyr::left_join(rz, by = "zs") |>
+  dplyr::mutate(couverture_4s = dplyr::coalesce(couverture_4s, 0))
+incompl <- dplyr::filter(tous, couverture_4s < 1)
+envoi <- dplyr::n_distinct(d$zs[d$semaine == S])
+cat(sprintf("Indicateur approché calculé pour toutes les zones : une zone-semaine compte comme rapportée si la base contient au moins une ligne. En S%d, %d zones sur %d ont des données. Au cours des 4 dernières semaines, %d zones ont au moins une semaine manquante%s.\n\n",
+  S, envoi, nrow(tous), nrow(incompl),
+  if (nrow(incompl)) paste0(" : ", enumerer(paste0(nom_zone(incompl$zs), " (S", incompl$manquantes_4s, ")"))) else ""))
+as <- readr::read_csv(chemin_donnees("external/completude_as.csv"), show_col_types = FALSE) |> dplyr::filter(semaine == S)
+if (nrow(as)) {
+  cat(sprintf("\n\nTableau 5. Complétude et promptitude des aires de santé, zones MSF, S%d (données saisies manuellement).\n\n", S))
+  flextable_to_rmd(as |>
+    dplyr::transmute(`Zone de santé` = nom_zone(zs), `Aires de santé` = aires_sante, `Complétude (%)` = n_fr(completude_pct, 1),
+                     `Promptitude (%)` = n_fr(promptitude_pct, 1), `AS n'ayant pas rapporté (%)` = n_fr(as_non_rapportees_pct)) |>
+    flextable() |> tab_style(9))
+} else {
+  cat(sprintf("*Complétude par aire de santé non disponible pour S%d : la compléter dans `data/external/completude_as.csv`.*\n", S))
+}
+```
+
+# Annexe : traitement des données
+
+```{r annexe}
+ids_complet$journal |>
+  dplyr::filter(n > 0) |>
+  dplyr::transmute(`Règle` = regle, `Occurrences (base entière)` = n, Action = action) |>
+  flextable() |>
+  tab_style(8) |>
+  align(j = c(1, 3), align = "left", part = "all")
+```

@@ -1,0 +1,26 @@
+Type: project
+Title: Situation epidemiologique Ituri
+Version: 1.0
+Imports:
+    digest,
+    dplyr,
+    fixest,
+    flextable,
+    ggplot2,
+    here,
+    knitr,
+    mgcv,
+    officer,
+    patchwork,
+    ragg,
+    readr,
+    readxl,
+    renv,
+    rmarkdown,
+    scales,
+    testthat,
+    tibble,
+    tidyr,
+    writexl,
+    yaml,
+    zip

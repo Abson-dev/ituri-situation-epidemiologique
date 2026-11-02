@@ -1,0 +1,7 @@
+cff-version: 1.2.0
+message: "Citer ce dépôt si vous réutilisez le code. DOI à ajouter lors de l'archivage."
+title: "Situation épidémiologique de l'Ituri : rapport automatisé et analyse reproductible"
+type: software
+authors:
+  - family-names: Hema
+    given-names: Aboubacar

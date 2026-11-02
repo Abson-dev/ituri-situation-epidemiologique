@@ -1,0 +1,77 @@
+# Tous les choix d'analyse sont ici : aucun chiffre "en dur" dans le code.
+rapport:
+  auteur: "Abdul Salam"
+  fonction: "Épidémiologiste, Mission MSFCH-RDC"
+  email: "Msfch-rdc-epidemio@geneva.msf.org"
+  province: "Ituri"
+
+donnees:
+  motif_fichier: "^Base_DPS_Ituri_Week([0-9]+)\\.xlsx$"
+  origine_semaine1: "2025-12-29"   # lundi de la semaine 1 de 2026
+  nb_zs_attendu: 36
+
+epidemie:
+  date_declaration: "2026-05-15"
+  semaine_rupture: 20              # semaine contenant la déclaration (11-17 mai 2026)
+  sitrep_exposition: "n092"        # sitrep INSP-COUSP servant à définir l'exposition
+  semaine_exposition: 32           # dernière semaine complète avant ce sitrep (14 août 2026)
+
+zones_msf: ["MONGBWALU", "FATAKI", "ANGUMU", "DRODRO"]
+
+nettoyage:
+  regle_doublons: "max"            # max | somme | retirer (conflits zone-semaine-maladie)
+  mediane_zone_pour_zero: 50       # zéro/ligne absente traité comme manquant si médiane zone >= seuil
+  semaine_pop_min: 3               # population de référence : valeur modale à partir de cette semaine
+
+paludisme:
+  positivite_rupture: 0.05         # positivité jugée incompatible avec un dépistage fonctionnel
+  positivite_base_min: 0.30        # positivité de base minimale pour parler de rupture
+  fenetre: 6                       # semaines rapportées examinées
+  min_sous_seuil: 4                # dont au moins n sous le seuil
+  part_conf_egal_susp: 0.50        # confirmés = suspects sur >= 50 % des semaines de base
+
+seuils:
+  rougeole_facteur: 2              # dédoublement par rapport à la moyenne des semaines précédentes
+  rougeole_fenetre: 4
+  rougeole_min_cas: 3
+  # À valider avec la DPS. Seuils hebdomadaires pour 100 000 habitants (population > 30 000).
+  meningite_alerte: 3
+  meningite_epidemique: 10
+
+analyse:
+  resultats_principaux: ["PALUDISME SUSP", "IRA", "PNEUMONIE", "DIARRHEE DHY M5", "FIEVRE TYPHOIDE"]
+  resultats_secondaires: ["PALUDISME CONF"]
+  incidence_reference: 10          # contraste rapporté : 10 cas MVE/10 000 hab. vs 0
+  seuil_groupe_fort: 50            # analyse de sensibilité par catégories (cas MVE cumulés)
+  couverture_min_zone: 0.90        # sensibilité : zones rapportant >= 90 % des semaines
+  semaine_placebo: 10
+  exclusion_transition: [20, 21]
+  n_permutations: 1999
+  n_permutations_demo: 49
+  n_tirages_deficit: 4000
+  graine: 20260515
+
+libelles:
+  PALUDISME SUSP: {fr: "Paludisme suspect", en: "Suspected malaria"}
+  PALUDISME CONF: {fr: "Paludisme confirmé", en: "Confirmed malaria"}
+  FIEVRE TYPHOIDE: {fr: "Fièvre typhoïde", en: "Typhoid fever (clinical)"}
+  ROUGEOLE: {fr: "Rougeole", en: "Measles"}
+  CHOLERA: {fr: "Choléra", en: "Cholera"}
+  DIARR SANGLANTE: {fr: "Diarrhées sanglantes", en: "Bloody diarrhoea"}
+  MONKEYPOX: {fr: "Monkeypox", en: "Mpox"}
+  MENINGITE: {fr: "Méningite", en: "Meningitis"}
+  PFA: {fr: "Paralysie flasque aiguë", en: "Acute flaccid paralysis"}
+  DIPHTERIE: {fr: "Diphtérie", en: "Diphtheria"}
+  COQUELUCHE: {fr: "Coqueluche", en: "Pertussis"}
+  FIEVRE JAUNE: {fr: "Fièvre jaune", en: "Yellow fever"}
+  DECES MATERNELS: {fr: "Décès maternels", en: "Maternal deaths"}
+  FHA: {fr: "Fièvre hémorragique aiguë", en: "Acute haemorrhagic fever"}
+  RAGE: {fr: "Rage", en: "Rabies"}
+  PESTE: {fr: "Peste", en: "Plague"}
+  IRA: {fr: "Infections respiratoires aiguës", en: "Acute respiratory infection"}
+  PNEUMONIE: {fr: "Pneumonie", en: "Pneumonia"}
+  GRIPPE: {fr: "Syndrome grippal", en: "Influenza-like illness"}
+  DIARRHEE DHY M5: {fr: "Diarrhée avec déshydratation < 5 ans", en: "Diarrhoea with dehydration, under 5"}
+
+tableau_principal: ["PALUDISME SUSP", "PALUDISME CONF", "FIEVRE TYPHOIDE", "ROUGEOLE", "CHOLERA", "DIARR SANGLANTE", "MONKEYPOX", "MENINGITE", "PFA", "DIPHTERIE", "COQUELUCHE", "FIEVRE JAUNE", "DECES MATERNELS", "FHA", "RAGE", "PESTE"]
+tableau_autres: ["IRA", "PNEUMONIE", "GRIPPE", "DIARRHEE DHY M5"]

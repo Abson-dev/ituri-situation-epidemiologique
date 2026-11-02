@@ -1,0 +1,155 @@
+---
+title: "Supplementary appendix: indirect effects of the 2026 Ebola outbreak on notified routine morbidity in Ituri"
+output:
+  word_document:
+    reference_docx: ../assets/modele_article.docx
+    fig_caption: true
+---
+
+```{r init, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, warning = FALSE, message = FALSE, dpi = 300, dev = "ragg_png")
+options(dplyr.summarise.inform = FALSE)
+for (f in list.files(here::here("R"), full.names = TRUE)) source(f, encoding = "UTF-8")
+library(flextable); library(ggplot2)
+cfg <- lire_config()
+ids <- nettoyer_ids(trouver_base(cfg), cfg)
+R <- resultats_article(ids, cfg)
+res <- R$resultats
+codes <- c(unlist(cfg$analyse$resultats_principaux), unlist(cfg$analyse$resultats_secondaires))
+lab <- function(k) libelle(k, cfg, "en")
+tab_style <- function(ft, taille = 8) {
+  ft |> fontsize(size = taille, part = "all") |> font(fontname = "Calibri", part = "all") |>
+    bold(part = "header") |> padding(padding.top = 1, padding.bottom = 1, part = "all") |>
+    border_remove() |>
+    hline_top(border = officer::fp_border(width = 1), part = "header") |>
+    hline_bottom(border = officer::fp_border(width = 0.75), part = "header") |>
+    hline_bottom(border = officer::fp_border(width = 1), part = "body") |>
+    align(align = "center", part = "all") |> align(j = 1, align = "left", part = "all") |>
+    set_table_properties(layout = "autofit", width = 1)
+}
+```
+
+`r if (mode_demo()) "**SYNTHETIC DATA: technical demonstration only.**"`
+
+# S1. Data provenance
+
+Source file: `r ids$fichier`. SHA-256: `r ids$sha256`. Weeks 1–`r ids$semaine_max` of 2026; `r format(ids$n_brut, big.mark = ",")` rows; `r dplyr::n_distinct(ids$donnees$zs)` health zones. Confirmed EVD counts by zone and province (situation report `r cfg$epidemie$sitrep_exposition`, INSP-COUSP, 14 August 2026) were transcribed from the MSF report for weeks 32–33 of 2026, not from the primary report. **The primary report should be consulted before submission.**
+
+# S2. Data cleaning log
+
+```{r journal}
+ids$journal |>
+  dplyr::transmute(Rule = regle, Occurrences = n, Action = action) |>
+  flextable() |> tab_style() |> align(j = c(1, 3), align = "left", part = "all")
+```
+
+# S3. Zones with loss of malaria confirmation
+
+```{r ruptures}
+ids$ruptures |>
+  dplyr::filter(!is.na(debut_rupture) | conf_egal_susp) |>
+  dplyr::left_join(dplyr::select(R$expo, zs, mve), by = "zs") |>
+  dplyr::arrange(debut_rupture) |>
+  dplyr::transmute(Zone = nom_zone(zs), `Pre-outbreak median ratio` = sprintf("%.0f%%", 100 * positivite_base),
+                   `Confirmed = suspected at baseline` = ifelse(conf_egal_susp, "Yes", "No"),
+                   `Onset week` = debut_rupture, `Confirmed EVD cases` = mve) |>
+  flextable() |> tab_style()
+```
+
+# S4. Reconciliation with the published week 32 report
+
+Differences reflect late reports added after publication and the cleaning rules. The transcribed report is in `data/external/rapport_s32_reference.csv`.
+
+```{r rapprochement}
+rapprocher_reference(ids, cfg) |>
+  dplyr::transmute(Disease = lab(maladie), `Report: week 32` = S32, `Database: week 32` = S32_base,
+                   `Report: cumulative cases` = cumul_2026, `Database: cumulative cases` = cumul_base,
+                   `Difference, %` = ifelse(is.na(ecart_pct), "–", sprintf("%.1f", ecart_pct)),
+                   `Report: deaths` = deces_2026, `Database: deaths` = deces_base) |>
+  flextable() |> tab_style(7.5)
+```
+
+# S5. Exposure by health zone and agreement with routine haemorrhagic fever notifications
+
+Routine notifications are cumulative to week `r cfg$epidemie$semaine_exposition`. Spearman ρ = `r sprintf("%.2f", R$concordance$rho)` for counts and `r sprintf("%.2f", R$concordance$rho_inc)` for incidence. Discordant zones may reflect where cases are reported, how they are classified, or data errors, and should be reviewed with zone teams.
+
+```{r expo}
+R$expo |>
+  dplyr::arrange(dplyr::desc(mve)) |>
+  dplyr::transmute(Zone = nom_zone(zs), Population = format(pop, big.mark = ","), `Confirmed EVD cases` = mve,
+                   `Per 10,000` = sprintf("%.1f", inc), `Routine AHF notifications` = fha, Group = as.character(groupe)) |>
+  flextable() |> tab_style(7.5)
+```
+
+# S6. Sensitivity analyses
+
+```{r fig-sens, fig.width=7.2, fig.height=8.4, fig.cap="Figure S1. Sensitivity of the ratio of rate ratios (10 EVD cases per 10,000 versus none; case-count exposure: 100 cases versus none). Vertical line: no association. Bars: 95% CI; log scale."}
+sens <- lapply(codes, function(k) {
+  dplyr::bind_rows(
+    dplyr::mutate(dplyr::select(res[[k]]$principal, rrr, bas, haut), analyse = "Main analysis"),
+    dplyr::mutate(dplyr::select(res[[k]]$gamm$contraste, rrr, bas, haut), analyse = "Negative binomial mixed model"),
+    dplyr::select(res[[k]]$sensibilite$table, rrr, bas, haut, analyse)
+  ) |> dplyr::mutate(issue = lab(k))
+}) |> dplyr::bind_rows()
+niveaux <- rev(c("Main analysis", "Negative binomial mixed model", setdiff(unique(sens$analyse), c("Main analysis", "Negative binomial mixed model"))))
+sens <- dplyr::mutate(sens, analyse = factor(analyse, levels = niveaux), issue = factor(issue, levels = lab(codes)))
+ggplot(sens, aes(rrr, analyse)) +
+  geom_vline(xintercept = 1, colour = COUL$axe, linewidth = 0.4) +
+  geom_linerange(aes(xmin = bas, xmax = haut), colour = COUL$serie1, linewidth = 0.5) +
+  geom_point(colour = COUL$serie1, size = 1.5) +
+  scale_x_log10(breaks = c(0.5, 0.75, 1, 1.5)) +
+  facet_wrap(~issue, ncol = 2) +
+  labs(x = "Ratio of rate ratios (log scale)", y = NULL) +
+  theme_rapport(8) +
+  theme(panel.grid.major.y = element_blank(), panel.grid.major.x = element_line(colour = COUL$grille, linewidth = 0.25),
+        axis.text.y = element_text(size = 6.5))
+```
+
+```{r tab-sens}
+sens |>
+  dplyr::mutate(v = sprintf("%.2f (%.2f–%.2f)", rrr, bas, haut)) |>
+  dplyr::select(analyse, issue, v) |>
+  tidyr::pivot_wider(names_from = issue, values_from = v) |>
+  dplyr::arrange(dplyr::desc(analyse)) |>
+  dplyr::mutate(analyse = as.character(analyse)) |>
+  dplyr::rename(Analysis = analyse) |>
+  flextable() |> tab_style(6.5)
+```
+
+# S7. Categorical exposure
+
+Rate ratios relative to zones without EVD. The threshold of 50 cases is arbitrary and is used for description only.
+
+```{r categ}
+lapply(codes, function(k) {
+  x <- res[[k]]$sensibilite$categories
+  tibble::tibble(Outcome = lab(k),
+                 `1–49 EVD cases` = sprintf("%.2f (%.2f–%.2f)", x$rrr[1], x$bas[1], x$haut[1]),
+                 `≥50 EVD cases` = sprintf("%.2f (%.2f–%.2f)", x$rrr[2], x$bas[2], x$haut[2]),
+                 `Leave-one-zone-out range` = sprintf("%.2f–%.2f", res[[k]]$sensibilite$loo[1], res[[k]]$sensibilite$loo[2]))
+}) |> dplyr::bind_rows() |> flextable() |> tab_style()
+```
+
+# S8. Model diagnostics
+
+Lag-1 autocorrelation of randomised quantile residuals from the negative binomial mixed model. Residual autocorrelation supports using zone-clustered inference and permutation tests in the main analysis, rather than model-based standard errors.
+
+```{r diag}
+lapply(codes, function(k) tibble::tibble(Outcome = lab(k), `Negative binomial size` = sprintf("%.1f", res[[k]]$gamm$theta),
+                                         `Residual lag-1 autocorrelation` = sprintf("%.2f", res[[k]]$gamm$ac1),
+                                         `Pre-trend P` = sprintf("%.3f", res[[k]]$evenement$p_pre),
+                                         `Observations` = res[[k]]$principal$n_obs,
+                                         `Zones` = res[[k]]$principal$n_zs)) |>
+  dplyr::bind_rows() |> flextable() |> tab_style()
+```
+
+# S9. Computational environment
+
+```{r session, comment=""}
+s <- sessionInfo()
+cat(s$R.version$version.string, "\n", s$platform, "\n\n")
+paquets <- c("fixest", "mgcv", "dplyr", "tidyr", "ggplot2", "patchwork", "flextable", "rmarkdown", "knitr", "readxl")
+cat(paste(paquets, vapply(paquets, function(p) as.character(utils::packageVersion(p)), ""), collapse = "; "))
+```
+
+Random seed: `r cfg$analyse$graine`. Permutations: `r R$n_perm`. Package versions are locked in `renv.lock`.

@@ -1,0 +1,30 @@
+# Données : propriété de la DPS Ituri et de MSF, jamais versionnées sans autorisation écrite.
+data/raw/
+data/external/
+data/synthetic/
+data/corrections_manuelles.csv
+notes/*
+!notes/README.md
+*.xlsx
+*.xls
+*.pdf
+
+# Résultats et documents générés (contiennent des chiffres réels)
+outputs/
+*.docx
+*.rds
+rapports/*_files/
+
+# Document de travail citant les données
+docs/anomalies_rapport_S32.md
+
+# Marque MSF
+assets/logo_msf.png
+
+# R et système
+.Rhistory
+.RData
+.Rproj.user/
+renv/library/
+renv/staging/
+~$*
