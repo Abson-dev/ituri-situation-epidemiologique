@@ -7,25 +7,43 @@
 
 [Version française](README.fr.md)
 
-An R Markdown pipeline that turns the weekly Integrated Disease Surveillance and Response (IDSR) database of Ituri province, Democratic Republic of the Congo, into two products from one command:
+An R pipeline that turns the weekly Integrated Disease Surveillance and Response (IDSR) database of Ituri province, Democratic Republic of the Congo, into three products:
 
 - **A weekly epidemiological report** in Word, with narrative text computed from the data.
+- **An interactive dashboard** for exploring diseases, health zones, malaria confirmation, Ebola and data quality.
 - **A controlled interrupted time series analysis** of how notified routine morbidity changed with Ebola burden across 36 health zones.
 
-> **Status:** work in progress. No results are published in this repository. Real data and the manuscript text are withheld until the data owners authorise their release ([data availability](#data-availability)).
+> **Status:** private repository, work in progress. Real data and the manuscript text are withheld until the data owners authorise their release ([data availability](#data-availability)). Early commits contain draft text and findings, so the history must be rewritten before this repository is made public.
 
-## Try it in two commands
+## Try it without real data
 
-No real data is needed. Demo mode generates a synthetic database that has the same structure and defects as real surveillance data, then runs the full pipeline, including tests.
+Demo mode generates a synthetic database that has the same structure and defects as real surveillance data, then runs the tests, the weekly report, the models and the supplementary appendix.
 
 ```bash
 Rscript -e "install.packages('renv'); renv::restore()"
 Rscript run_all.R --demo
 ```
 
-Outputs appear in `outputs/demo/` and are labelled as synthetic. This exact sequence runs on a clean Ubuntu machine at every push.
+Outputs appear in `outputs/demo/` and are labelled as synthetic. The same steps run on a clean Ubuntu machine at every push.
 
 **Requirements:** R 4.5.2 and Pandoc (bundled with RStudio).
+
+## Dashboard
+
+On Windows, double-click [`dashboard/Lancer_tableau_de_bord.bat`](dashboard/Lancer_tableau_de_bord.bat). On any system, run `Rscript dashboard/lancer.R`. The dashboard opens in a browser, in French, and is reachable only from the local computer.
+
+| Page | Question it answers |
+|---|---|
+| Vue d'ensemble | What needs attention this week? |
+| Maladies | How is a disease evolving, where, and at what incidence? |
+| Zones de santé | What is the situation in a given zone? |
+| Paludisme | Does the trend reflect disease or a loss of confirmation? |
+| Ebola | What does the latest situation report say, and does it agree with IDSR? |
+| Qualité des données | Which zones are missing, and which conflicts need resolving? |
+| Analyse d'impact | Which analysis results withstand the robustness checks? |
+| Données | Filter and export to CSV or Excel |
+
+Without a real database, the dashboard starts on synthetic data and shows a banner. The impact page needs models computed by `Rscript run_all.R --cible=article`. See the [dashboard guide](dashboard/README.md).
 
 ## Pipeline
 
@@ -34,10 +52,12 @@ flowchart LR
     A[(Weekly IDSR<br/>database)] --> C[Validate and clean<br/>every rule logged]
     B[(Situation reports,<br/>completeness)] --> C
     C --> D[Weekly report<br/>.docx]
+    C --> J[Interactive<br/>dashboard]
     C --> E[Panel:<br/>zone x week]
     E --> F[Fixed-effects models,<br/>permutation inference]
     F --> G[Robustness checks,<br/>sensitivity analyses]
     G --> H[Supplementary<br/>appendix .docx]
+    G --> J
     I[config.yml] -.-> C
     I -.-> F
 ```
@@ -47,6 +67,8 @@ flowchart LR
 | Task | Command |
 |---|---|
 | Full run on synthetic data | `Rscript run_all.R --demo` |
+| Dashboard | `dashboard/Lancer_tableau_de_bord.bat` |
+| Dashboard on synthetic data | `dashboard/Lancer_tableau_de_bord.bat --demo` |
 | Weekly report for week 44 | `Rscript run_all.R --cible=hebdo --semaine=44` |
 | Analysis and appendix | `Rscript run_all.R --cible=article` |
 | Recompute cached models | `Rscript run_all.R --cible=article --forcer` |
@@ -79,7 +101,7 @@ Full details are in the [analysis plan](docs/analysis_plan.md), and reporting it
 | Continuous checks | [GitHub Actions](.github/workflows/verification.yml) runs the demo from a clean checkout |
 | Correctness | [Tests](tests/testthat) cover data invariants and recovery of a known simulated effect |
 
-The demo proves that the code runs. Reproducing the real results also requires the authorised data.
+The demo proves that the code runs. Reproducing the real results also requires the authorised data. Continuous checks do not launch the dashboard.
 
 ## Repository structure
 
@@ -99,7 +121,7 @@ The demo proves that the code runs. Reproducing the real results also requires t
 
 ## Data availability
 
-The surveillance data belong to the Provincial Health Division (DPS) of Ituri and are not in this repository, nor are situation-report transcriptions, field notes, generated reports, or the manuscript text. Requests should be addressed to the data owners. [`data/README.md`](data/README.md) lists the expected files, the data dictionary, and the hash of the analysis dataset.
+The surveillance data belong to the Provincial Health Division (DPS) of Ituri and are not in this repository, nor are situation-report transcriptions, field notes, generated reports, local settings (`config.local.yml`), or the manuscript text. Requests should be addressed to the data owners. [`data/README.md`](data/README.md) lists the expected files, the data dictionary, and the hash of the analysis dataset.
 
 ## Citation and licence
 

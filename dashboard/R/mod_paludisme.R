@@ -31,8 +31,9 @@ mod_paludisme_server <- function(id, app, S, ids_S) {
                           hovertemplate = "<b>S%{x}</b><br>Toutes les zones : %{y:.0%}<extra></extra>") |>
         plotly::add_lines(y = ~corrigee, name = "Hors zones sans confirmation", line = list(color = COUL$serie1, width = 2.5),
                           hovertemplate = "<b>S%{x}</b><br>Hors zones sans confirmation : %{y:.0%}<extra></extra>") |>
-        pl_style(app$cfg, legende = TRUE) |>
-        plotly::layout(yaxis = list(tickformat = ".0%", range = c(0, 1), gridcolor = COUL$grille, zeroline = FALSE, fixedrange = TRUE, title = ""))
+        pl_style(app$cfg, legende = TRUE, titre_x = "") |>
+        plotly::layout(legend = list(orientation = "h", x = 0, y = -0.12),
+                       yaxis = list(tickformat = ".0%", range = c(0, 1), gridcolor = COUL$grille, zeroline = FALSE, fixedrange = TRUE, title = ""))
     })
     output$g_conf <- plotly::renderPlotly(pl_barres(serie_cible(ids_S()$donnees, "PALUDISME CONF", S()), "cas", "cas confirmés", app$cfg))
 

@@ -23,6 +23,8 @@ ui <- page_navbar(
   header = tags$head(tags$link(rel = "stylesheet", href = "style.css")),
   sidebar = sidebar(
     width = 250, gap = "0.5rem",
+    # Sur écran étroit, le sélecteur de semaine reste accessible au-dessus du contenu.
+    open = list(desktop = "open", mobile = "always-above"),
     if (APP$demo) div(class = "bandeau-demo", "DONNÉES SYNTHÉTIQUES : aucune valeur n'est réelle"),
     selectInput("semaine", "Semaine de référence", choices = choix_semaines(APP), selected = APP$S_max),
     uiOutput("periode"),
