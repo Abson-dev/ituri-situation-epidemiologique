@@ -2,7 +2,26 @@
 
 [English version](README.md)
 
-Une seule commande produit le rapport hebdomadaire et l'analyse à partir de la base IDS de la DPS.
+À partir de la base IDS de la DPS, ce projet produit le rapport hebdomadaire, un tableau de bord interactif et une analyse reproductible.
+
+> **État :** dépôt privé, travail en cours. Les données réelles et le texte du manuscrit restent hors du dépôt tant que leurs propriétaires n'ont pas autorisé leur diffusion. Les premiers commits contiennent du texte et des résultats provisoires : il faudra réécrire l'historique avant de rendre ce dépôt public.
+
+## Tableau de bord
+
+Sous Windows, double-cliquer sur [`dashboard/Lancer_tableau_de_bord.bat`](dashboard/Lancer_tableau_de_bord.bat). Le navigateur s'ouvre ; garder la fenêtre noire ouverte et la fermer pour arrêter. L'application n'est accessible que depuis cet ordinateur.
+
+| Page | Question à laquelle elle répond |
+|---|---|
+| Vue d'ensemble | Que faut-il regarder en priorité cette semaine ? |
+| Maladies | Comment évolue une maladie, où, et avec quelle incidence ? |
+| Zones de santé | Quelle est la situation d'une zone donnée ? |
+| Paludisme | La tendance reflète-t-elle la maladie ou une rupture de confirmation ? |
+| Ebola | Que dit le dernier sitrep, et concorde-t-il avec l'IDS ? |
+| Qualité des données | Quelles zones manquent, et quels conflits arbitrer avec la DPS ? |
+| Analyse d'impact | Quels résultats résistent aux contrôles de robustesse ? |
+| Données | Filtrer et exporter en CSV ou Excel |
+
+Sans base réelle, le tableau de bord démarre sur des données synthétiques, signalées par un bandeau. `Lancer_tableau_de_bord.bat --demo` force ce mode. La page « Analyse d'impact » nécessite les modèles calculés par `Rscript run_all.R --cible=article`. Voir le [guide du tableau de bord](dashboard/README.md).
 
 ## Essai rapide, sans données réelles
 
@@ -27,6 +46,8 @@ Rscript run_all.R --cible=hebdo --semaine=44
 ```
 
 4. Relire le rapport, puis le diffuser. Il indique lui-même ce qui manque, par exemple un sitrep trop ancien.
+
+Le tableau de bord utilise automatiquement la base la plus récente à son prochain lancement. Le bouton **Rapport Word** génère aussi le rapport de la semaine choisie.
 
 ## Reproduire l'analyse
 
