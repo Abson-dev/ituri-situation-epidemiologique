@@ -56,7 +56,8 @@ if (cible %in% c("hebdo", "tout")) {
 if (cible %in% c("article", "tout")) {
   ids <- nettoyer_ids(trouver_base(cfg), cfg)
   invisible(resultats_article(ids, cfg, forcer = forcer))
-  rendre("article.Rmd", "Article_Ebola_Ituri.docx", file.path(sorties, "article"))
+  # Le texte du manuscrit reste local jusqu'à l'autorisation des propriétaires des données.
+  if (file.exists(here::here("rapports/article.Rmd"))) rendre("article.Rmd", "Article_Ebola_Ituri.docx", file.path(sorties, "article"))
   rendre("supplement.Rmd", "Supplement_Ebola_Ituri.docx", file.path(sorties, "article"))
 }
 

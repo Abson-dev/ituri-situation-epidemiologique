@@ -1,79 +1,105 @@
-# Situation épidémiologique de l'Ituri : rapport automatisé et analyse pour publication
+# Ituri epidemiological surveillance: automated reporting and reproducible analysis
 
-Une seule commande produit le rapport hebdomadaire, l'article et son supplément à partir de la base IDS de la DPS.
+[![Verification](https://github.com/Abson-dev/ituri-situation-epidemiologique/actions/workflows/verification.yml/badge.svg)](https://github.com/Abson-dev/ituri-situation-epidemiologique/actions/workflows/verification.yml)
+![R 4.5.2](https://img.shields.io/badge/R-4.5.2-276DC3)
+![Dependencies locked with renv](https://img.shields.io/badge/dependencies-renv-informational)
+![Reporting: STROBE/RECORD](https://img.shields.io/badge/reporting-STROBE%20%7C%20RECORD-success)
 
-| Sortie | Fichier |
-|---|---|
-| Rapport hebdomadaire (Word) | `outputs/hebdo/Rapport_Ituri_S##.docx` |
-| Projet d'article, en anglais (Word) | `outputs/article/Article_Ebola_Ituri.docx` |
-| Supplément de l'article (Word) | `outputs/article/Supplement_Ebola_Ituri.docx` |
+[Version française](README.fr.md)
 
-## Essai rapide, sans données réelles
+An R Markdown pipeline that turns the weekly Integrated Disease Surveillance and Response (IDSR) database of Ituri province, Democratic Republic of the Congo, into two products from one command:
 
-Les données ne sont pas versionnées (voir [data/README.md](data/README.md)). Pour tout exécuter sur une base synthétique :
+- **A weekly epidemiological report** in Word, with narrative text computed from the data.
+- **A controlled interrupted time series analysis** of how notified routine morbidity changed with Ebola burden across 36 health zones.
 
-```
+> **Status:** work in progress. No results are published in this repository. Real data and the manuscript text are withheld until the data owners authorise their release ([data availability](#data-availability)).
+
+## Try it in two commands
+
+No real data is needed. Demo mode generates a synthetic database that has the same structure and defects as real surveillance data, then runs the full pipeline, including tests.
+
+```bash
 Rscript -e "install.packages('renv'); renv::restore()"
 Rscript run_all.R --demo
 ```
 
-Les sorties vont dans `outputs/demo/` et portent la mention « données synthétiques ». Ce contrôle tourne aussi à chaque envoi via [GitHub Actions](.github/workflows/verification.yml). Il prouve que le code s'exécute, pas que les résultats réels sont reproduits : cela exige les données de la DPS.
+Outputs appear in `outputs/demo/` and are labelled as synthetic. This exact sequence runs on a clean Ubuntu machine at every push.
 
-## Chaque semaine
+**Requirements:** R 4.5.2 and Pandoc (bundled with RStudio).
 
-1. Déposer la nouvelle base dans `data/raw/`, sans la modifier : `Base_DPS_Ituri_Week44.xlsx`.
-2. Si disponibles, compléter :
-   - `data/external/mve_provinces.csv` et `mve_zones.csv` : nouveau sitrep (lignes ajoutées, anciennes conservées) ;
-   - `data/external/completude_as.csv` : complétude par aire de santé ;
-   - `notes/S44.md` : informations de terrain, texte libre.
-3. Lancer :
+## Pipeline
 
-```
-Rscript run_all.R --cible=hebdo --semaine=44
-```
-
-4. Relire le rapport, puis le diffuser. Il indique lui-même ce qui manque, par exemple un sitrep trop ancien.
-
-## Reproduire l'article
-
-```
-Rscript -e "renv::restore()"   # une seule fois : installe les versions exactes
-# placer les données selon data/README.md
-Rscript run_all.R --cible=tests
-Rscript run_all.R --cible=article
+```mermaid
+flowchart LR
+    A[(Weekly IDSR<br/>database)] --> C[Validate and clean<br/>every rule logged]
+    B[(Situation reports,<br/>completeness)] --> C
+    C --> D[Weekly report<br/>.docx]
+    C --> E[Panel:<br/>zone x week]
+    E --> F[Fixed-effects models,<br/>permutation inference]
+    F --> G[Robustness checks,<br/>sensitivity analyses]
+    G --> H[Supplementary<br/>appendix .docx]
+    I[config.yml] -.-> C
+    I -.-> F
 ```
 
-Le premier calcul prend plusieurs minutes ; le résultat est ensuite mis en cache dans `outputs/modeles/`. Il n'est recalculé que si les données, la configuration ou le code changent. `--forcer` impose un recalcul. La graine aléatoire est fixée dans `config.yml`.
+## Usage
 
-Après une mise à jour des données, les chiffres de l'article changent seuls, mais pas les phrases d'interprétation. L'article affiche un avertissement tant que `SEM_VERROU` (début de `rapports/article.Rmd`) n'a pas été mis à jour après relecture.
-
-## Organisation
-
-| Élément | Rôle |
+| Task | Command |
 |---|---|
-| `config.yml` | Tous les paramètres : seuils, zones MSF, résultats analysés, règles de nettoyage |
-| `run_all.R` | Point d'entrée |
-| `R/donnees.R` | Lecture, validation, nettoyage journalisé |
-| `R/donnees_synthetiques.R` | Base factice du mode `--demo` |
-| `R/indicateurs.R` | Indicateurs du rapport |
-| `R/modeles.R` | Modèles de l'article |
-| `R/figures.R`, `R/modele_docx.R` | Figures et modèles Word |
-| `rapports/` | Sources R Markdown et bibliographie |
-| `data/raw/` | Bases brutes, jamais modifiées |
-| `data/external/` | Données transcrites à la main, absentes de la base |
-| `data/corrections_manuelles.csv` | Corrections validées par la DPS, appliquées avant le nettoyage et traçables |
-| `tests/testthat/` | Contrôles automatiques |
-| `docs/` | Plan d'analyse, liste de contrôle STROBE/RECORD |
-| `.github/workflows/` | Exécution automatique du mode `--demo` |
+| Full run on synthetic data | `Rscript run_all.R --demo` |
+| Weekly report for week 44 | `Rscript run_all.R --cible=hebdo --semaine=44` |
+| Analysis and appendix | `Rscript run_all.R --cible=article` |
+| Recompute cached models | `Rscript run_all.R --cible=article --forcer` |
+| Tests only | `Rscript run_all.R --cible=tests` |
 
-## Hors dépôt
+Code identifiers and command options are in French, the working language of the surveillance teams who run the pipeline.
 
-Bases brutes, PDF, transcriptions, notes de terrain, rapports générés et logo MSF restent uniquement en local (`.gitignore`). Avant de rendre ce dépôt public : obtenir l'autorisation de la DPS et de MSF, choisir une licence, puis relire `docs/` et `rapports/article.Rmd`.
+## Methods in brief
 
-## Limites à connaître
+| Element | Choice |
+|---|---|
+| Design | Controlled interrupted time series with a continuous exposure |
+| Unit | Health-zone week |
+| Estimand | Ratio of rate ratios, after versus before outbreak declaration, by local burden |
+| Estimator | Poisson pseudo-likelihood with zone and week fixed effects |
+| Inference | Zone-clustered standard errors, *t*(G−1) reference, permutation tests, Holm adjustment |
+| Checks | Event study, placebo break, zone-specific trends, alternative exposures, leave-one-zone-out, negative binomial mixed model, randomised quantile residuals |
 
-- **Pas de comparaison à 2025 calculée :** la base 2025 n'est pas disponible. Les cumuls 2025 ne s'affichent que pour S32, depuis le rapport transcrit.
-- **Sitrep MVE :** saisie manuelle ; un seul sitrep est disponible pour l'instant.
-- **Cartes :** aucune, faute de limites de zones de santé.
-- **Positivité du paludisme :** rapport confirmés/suspects, car le nombre de patients testés n'est pas dans la base.
-- **Seuil méningite et seuil rougeole :** à valider avec la DPS (`config.yml`).
+Full details are in the [analysis plan](docs/analysis_plan.md), and reporting items are mapped in the [STROBE/RECORD checklist](docs/checklist_STROBE_RECORD.md).
+
+## Reproducibility
+
+| Guarantee | How |
+|---|---|
+| Same software | R and all package versions locked in [`renv.lock`](renv.lock) |
+| Same data | Input identified by SHA-256 hash, printed in every output |
+| Same random numbers | Seed set in [`config.yml`](config.yml); repeated runs verified identical |
+| Traceable cleaning | Raw files never edited; each rule logged with its count; manual corrections kept in a separate audited file |
+| No hidden choices | Thresholds and analytic options live in `config.yml` |
+| Continuous checks | [GitHub Actions](.github/workflows/verification.yml) runs the demo from a clean checkout |
+| Correctness | [Tests](tests/testthat) cover data invariants and recovery of a known simulated effect |
+
+The demo proves that the code runs. Reproducing the real results also requires the authorised data.
+
+## Repository structure
+
+```text
+├── run_all.R                 Single entry point
+├── config.yml                All parameters
+├── R/                        Cleaning, indicators, models, figures, synthetic data
+├── rapports/                 R Markdown sources and bibliography
+├── tests/testthat/           Automated tests
+├── data/README.md            Data dictionary and required files
+├── notes/                    Local weekly field notes (not versioned)
+├── docs/                     Analysis plan and reporting checklist
+├── renv.lock                 Locked dependencies
+└── .github/workflows/        Continuous verification
+```
+
+## Data availability
+
+The surveillance data belong to the Provincial Health Division (DPS) of Ituri and are not in this repository, nor are situation-report transcriptions, field notes, generated reports, or the manuscript text. Requests should be addressed to the data owners. [`data/README.md`](data/README.md) lists the expected files, the data dictionary, and the hash of the analysis dataset.
+
+## Citation and licence
+
+Citation details are in [`CITATION.cff`](CITATION.cff). **No licence has been granted yet**, so the code remains under default copyright until one is added. Contribution guidelines are in [`CONTRIBUTING.md`](CONTRIBUTING.md).

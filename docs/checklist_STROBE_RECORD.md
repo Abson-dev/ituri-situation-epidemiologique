@@ -1,6 +1,6 @@
 # STROBE / RECORD checklist
 
-Location in `Article_Ebola_Ituri.docx` (A) or `Supplement_Ebola_Ituri.docx` (S). Complete the "To do" items before submission.
+Location in the manuscript (A; held locally until release is authorised) or the supplementary appendix (S). Complete the "To do" items before submission.
 
 | Item | Requirement | Location | Status |
 |---|---|---|---|

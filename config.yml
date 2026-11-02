@@ -1,8 +1,9 @@
 # Tous les choix d'analyse sont ici : aucun chiffre "en dur" dans le code.
 rapport:
-  auteur: "Abdul Salam"
-  fonction: "Épidémiologiste, Mission MSFCH-RDC"
-  email: "Msfch-rdc-epidemio@geneva.msf.org"
+  # Remplacés par config.local.yml, non versionné.
+  auteur: "[auteur]"
+  fonction: "[fonction]"
+  email: "[e-mail]"
   province: "Ituri"
 
 donnees:
@@ -16,7 +17,8 @@ epidemie:
   sitrep_exposition: "n092"        # sitrep INSP-COUSP servant à définir l'exposition
   semaine_exposition: 32           # dernière semaine complète avant ce sitrep (14 août 2026)
 
-zones_msf: ["MONGBWALU", "FATAKI", "ANGUMU", "DRODRO"]
+# Zones détaillées dans le rapport : exemple remplacé par config.local.yml.
+zones_msf: ["ADI", "BOGA", "KILO", "LOGO"]
 
 nettoyage:
   regle_doublons: "max"            # max | somme | retirer (conflits zone-semaine-maladie)

@@ -7,6 +7,8 @@ chemin_donnees <- function(...) here::here(if (mode_demo()) "data/synthetic" els
 
 lire_config <- function(chemin = here::here("config.yml")) {
   cfg <- yaml::read_yaml(chemin)
+  local <- here::here("config.local.yml")
+  if (!mode_demo() && file.exists(local)) cfg <- utils::modifyList(cfg, yaml::read_yaml(local))
   if (mode_demo()) cfg$analyse$n_permutations <- cfg$analyse$n_permutations_demo
   cfg
 }

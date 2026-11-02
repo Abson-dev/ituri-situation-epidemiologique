@@ -15,8 +15,11 @@ outputs/
 *.rds
 rapports/*_files/
 
-# Document de travail citant les données
+# Documents de travail citant les données ou des résultats non publiés
 docs/anomalies_rapport_S32.md
+docs/plan_analyse.md
+rapports/article.Rmd
+config.local.yml
 
 # Marque MSF
 assets/logo_msf.png

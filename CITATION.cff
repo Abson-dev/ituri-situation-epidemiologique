@@ -1,7 +1,8 @@
 cff-version: 1.2.0
-message: "Citer ce dépôt si vous réutilisez le code. DOI à ajouter lors de l'archivage."
-title: "Situation épidémiologique de l'Ituri : rapport automatisé et analyse reproductible"
+message: "Please cite this repository if you reuse the code. A DOI will be added on archiving."
+title: "Ituri epidemiological surveillance: automated reporting and reproducible analysis"
 type: software
 authors:
   - family-names: Hema
     given-names: Aboubacar
+    orcid: "https://orcid.org/0000-0001-9756-7270"

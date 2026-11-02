@@ -14,6 +14,7 @@ Après autorisation, placer les fichiers ainsi :
 | `external/rapport_s32_reference.csv` | Tableau du rapport MSF S32, pour le rapprochement | MSF |
 | `external/completude_as.csv` | Complétude par aire de santé | MSF |
 | `corrections_manuelles.csv` | Corrections validées par la DPS | DPS |
+| `external/controles_reels.yml` | Valeurs de contrôle des tests sur données réelles | Calculées |
 
 Empreinte SHA-256 de la base utilisée pour l'analyse :
 
