@@ -90,6 +90,7 @@ The demo proves that the code runs. Reproducing the real results also requires t
 ├── rapports/                 R Markdown sources and bibliography
 ├── tests/testthat/           Automated tests
 ├── data/README.md            Data dictionary and required files
+├── dashboard/                Interactive Shiny dashboard and Windows launcher
 ├── notes/                    Local weekly field notes (not versioned)
 ├── docs/                     Analysis plan and reporting checklist
 ├── renv.lock                 Locked dependencies

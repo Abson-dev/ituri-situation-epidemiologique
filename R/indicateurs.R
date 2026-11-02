@@ -10,7 +10,11 @@ libelle <- function(code, cfg, langue = "fr") {
     if (is.null(v)) k else v[[langue]]
   }, character(1), USE.NAMES = FALSE)
 }
-nom_zone <- function(z) tools::toTitleCase(tolower(z))
+# Conversion sur les valeurs uniques : toTitleCase est lent, et la base compte plus de 10 000 lignes.
+nom_zone <- function(z) {
+  u <- unique(z)
+  tools::toTitleCase(tolower(u))[match(z, u)]
+}
 enumerer <- function(x, vide = "aucune") {
   if (!length(x)) return(vide)
   if (length(x) == 1) return(x)
