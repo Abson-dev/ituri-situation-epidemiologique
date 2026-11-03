@@ -64,9 +64,9 @@ Without a real database, the dashboard starts on synthetic data and shows a bann
 |---|---|
 | [![Data quality page](docs/captures/qualite-des-donnees.png)](docs/captures/qualite-des-donnees.png) | [![Impact analysis page](docs/captures/analyse-impact.png)](docs/captures/analyse-impact.png) |
 
-| Data |
-|---|
-| [![Data page](docs/captures/donnees.png)](docs/captures/donnees.png) |
+| Data | Login (published version) |
+|---|---|
+| [![Data page](docs/captures/donnees.png)](docs/captures/donnees.png) | [![Login page](docs/captures/connexion.png)](docs/captures/connexion.png) |
 
 ## Pipeline
 

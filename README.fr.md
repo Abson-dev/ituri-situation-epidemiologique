@@ -27,6 +27,10 @@ Sans base réelle, le tableau de bord démarre sur des données synthétiques, s
 
 ![Page Vue d'ensemble : chiffres clés, alertes, tableau des maladies et tendances hebdomadaires](docs/captures/vue-ensemble.png)
 
+**Page de connexion de la version publiée :**
+
+![Page de connexion : formulaire avec nom d'utilisateur et mot de passe](docs/captures/connexion.png)
+
 Toutes les pages sont présentées dans le [README en anglais](README.md#screenshots).
 
 ## Essai rapide, sans données réelles
