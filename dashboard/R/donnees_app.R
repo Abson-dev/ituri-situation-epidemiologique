@@ -8,10 +8,12 @@ charger_app <- function() {
   if (!reel) Sys.setenv(ITURI_DEMO = "1")
   cfg <- lire_config()
   if (mode_demo() && !dir.exists(here::here("data/synthetic/raw"))) generer_donnees_synthetiques(cfg)
+  if (mode_demo() && !dir.exists(chemin_donnees("raw", "historique"))) generer_historique_synthetique(cfg)
   ids <- nettoyer_ids(trouver_base(cfg), cfg)
+  historique <- charger_historique(cfg)
   list(cfg = cfg, ids = ids, demo = mode_demo(), S_max = ids$semaine_max,
        zones = sort(unique(ids$donnees$zs)), expo = exposition_zones(ids, cfg),
-       modele = charger_modele(ids))
+       modele = charger_modele(ids), historique = historique, multi = donnees_multi_annees(ids, historique, cfg))
 }
 
 # Résultats déjà calculés par run_all.R pour cette même base, sans jamais lancer de calcul long ici.
@@ -31,9 +33,10 @@ choix_semaines <- function(app) {
   stats::setNames(sem, etiq)
 }
 
-choix_maladies <- function(app) {
+# toutes_annees : une maladie absente de l'année en cours reste comparable sur les années passées.
+choix_maladies <- function(app, toutes_annees = FALSE) {
   codes <- c(unlist(app$cfg$tableau_principal), unlist(app$cfg$tableau_autres))
-  codes <- codes[codes %in% unique(app$ids$donnees$maladie)]
+  codes <- codes[codes %in% unique(if (toutes_annees) app$multi$maladie else app$ids$donnees$maladie)]
   stats::setNames(codes, libelle(codes, app$cfg))
 }
 

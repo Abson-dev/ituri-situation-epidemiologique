@@ -14,6 +14,7 @@ Sous Windows, double-cliquer sur [`dashboard/Lancer_tableau_de_bord.bat`](dashbo
 |---|---|
 | Vue d'ensemble | Que faut-il regarder en priorité cette semaine ? |
 | Maladies | Comment évolue une maladie, où, et avec quelle incidence ? |
+| Années | Comment cette année se compare-t-elle aux années passées, à période égale ? |
 | Zones de santé | Quelle est la situation d'une zone donnée ? |
 | Paludisme | La tendance reflète-t-elle la maladie ou une rupture de confirmation ? |
 | Ebola | Que dit le dernier sitrep, et concorde-t-il avec l'IDS ? |
@@ -21,11 +22,15 @@ Sous Windows, double-cliquer sur [`dashboard/Lancer_tableau_de_bord.bat`](dashbo
 | Analyse d'impact | Quels résultats résistent aux contrôles de robustesse ? |
 | Données | Filtrer et exporter en CSV ou Excel |
 
-Sans base réelle, le tableau de bord démarre sur des données synthétiques, signalées par un bandeau. `Lancer_tableau_de_bord.bat --demo` force ce mode. La page « Analyse d'impact » nécessite les modèles calculés par `Rscript run_all.R --cible=article`. Voir le [guide du tableau de bord](dashboard/README.md).
+Sans base réelle, le tableau de bord démarre sur des données synthétiques, signalées par un bandeau. `Lancer_tableau_de_bord.bat --demo` force ce mode. Dans ce mode, la page « Années » couvre 2023 à 2026. Avec les données réelles, elle reste vide tant que les bases des années passées ne sont pas dans `data/raw/historique/` : un historique synthétique n'est jamais mélangé à des données réelles. La page « Analyse d'impact » nécessite les modèles calculés par `Rscript run_all.R --cible=article`. Voir le [guide du tableau de bord](dashboard/README.md).
 
 **Aperçu, sur données synthétiques (aucune valeur n'est réelle) :**
 
 ![Page Vue d'ensemble : chiffres clés, alertes, tableau des maladies et tendances hebdomadaires](docs/captures/vue-ensemble.png)
+
+**Page Années, sur données synthétiques.** Les saisons et la flambée de rougeole de 2024 sont inventées pour l'illustration : les écarts entre années n'ont ici aucune signification.
+
+![Page Années : comparaison d'une maladie de 2023 à 2026, avec chiffres clés, courbes hebdomadaires, tableau des maladies et carte par zone](docs/captures/annees.png)
 
 **Page de connexion de la version publiée :**
 

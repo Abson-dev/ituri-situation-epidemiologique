@@ -39,6 +39,7 @@ Pour changer de mots de passe ou mettre à jour les données, recommencer les de
 |---|---|
 | Vue d'ensemble | Que faut-il regarder en priorité cette semaine ? |
 | Maladies | Comment évolue une maladie, où, et avec quelle incidence ? |
+| Années | Comment cette année se compare-t-elle aux années passées, à période égale ? |
 | Zones de santé | Quelle est la situation d'une zone donnée ? |
 | Paludisme | La tendance reflète-t-elle la maladie ou une rupture de confirmation ? |
 | Ebola | Que dit le dernier sitrep, et concorde-t-il avec l'IDS ? |

@@ -37,6 +37,7 @@ On Windows, double-click [`dashboard/Lancer_tableau_de_bord.bat`](dashboard/Lanc
 |---|---|
 | Vue d'ensemble | What needs attention this week? |
 | Maladies | How is a disease evolving, where, and at what incidence? |
+| Années | How does this year compare with past years, over the same weeks? |
 | Zones de santé | What is the situation in a given zone? |
 | Paludisme | Does the trend reflect disease or a loss of confirmation? |
 | Ebola | What does the latest situation report say, and does it agree with IDSR? |
@@ -44,13 +45,17 @@ On Windows, double-click [`dashboard/Lancer_tableau_de_bord.bat`](dashboard/Lanc
 | Analyse d'impact | Which analysis results withstand the robustness checks? |
 | Données | Filter and export to CSV or Excel |
 
-Without a real database, the dashboard starts on synthetic data and shows a banner. The impact page needs models computed by `Rscript run_all.R --cible=article`. See the [dashboard guide](dashboard/README.md).
+Without a real database, the dashboard starts on synthetic data and shows a banner. In that mode, the Années page covers 2023 to 2026. With real data, it stays empty until the real past-year files are in `data/raw/historique/`, because synthetic history is never mixed with real data. The impact page needs models computed by `Rscript run_all.R --cible=article`. See the [dashboard guide](dashboard/README.md).
 
 ### Screenshots
 
 **All screenshots use synthetic data. No value shown is real, and zone names appear only to illustrate the layout.**
 
 ![Overview page with key figures, alerts, disease table and weekly trends](docs/captures/vue-ensemble.png)
+
+**Years page.** The seasonal patterns and the 2024 measles outbreak are invented for this illustration, so no comparison between years means anything here.
+
+![Years page comparing a disease across 2023 to 2026, with key figures, weekly curves, a disease table and a zone heat map](docs/captures/annees.png)
 
 | Diseases | Malaria |
 |---|---|

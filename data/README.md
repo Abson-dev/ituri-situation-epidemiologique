@@ -16,6 +16,15 @@ Après autorisation, placer les fichiers ainsi :
 | `corrections_manuelles.csv` | Corrections validées par la DPS | DPS |
 | `external/controles_reels.yml` | Valeurs de contrôle des tests sur données réelles | Calculées |
 
+Les années passées alimentent la page « Années » du tableau de bord :
+
+| Fichier | Contenu | Source |
+|---|---|---|
+| `raw/historique/Base_DPS_Ituri_2024.xlsx` | Une base par année, de même structure que la base hebdomadaire | MSF |
+| `corrections_manuelles_2024.csv` | Corrections validées pour cette année, facultatif | DPS |
+
+Les semaines sont comptées depuis le lundi de la semaine ISO 1 de chaque année. En mode réel, seul ce dossier est lu : un historique synthétique n'est jamais mélangé à des données réelles.
+
 Empreinte SHA-256 de la base utilisée pour l'analyse :
 
 ```

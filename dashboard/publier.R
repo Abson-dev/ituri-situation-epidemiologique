@@ -38,6 +38,8 @@ fichiers <- c(
   lister("dashboard/R", "\\.R$"),
   lister("dashboard/www"),
   base,
+  lister("data/raw/historique", "^Base_DPS_Ituri_[0-9]{4}\\.xlsx$"),
+  list.files(file.path(racine, "data"), pattern = "^corrections_manuelles_[0-9]{4}\\.csv$", full.names = TRUE),
   file.path(racine, "data/external", c("mve_provinces.csv", "mve_zones.csv", "rapport_s32_reference.csv", "completude_as.csv")),
   file.path(racine, "data/corrections_manuelles.csv"),
   list.files(file.path(racine, "notes"), pattern = "^S[0-9]+\\.md$", full.names = TRUE),

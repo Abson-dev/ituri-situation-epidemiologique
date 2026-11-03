@@ -9,7 +9,7 @@ assombrir <- function(couleur, facteur = 0.62) {
   grDevices::rgb(v[1], v[2], v[3], maxColorValue = 255)
 }
 
-pl_style <- function(p, cfg, titre_y = NULL, titre_x = "Semaine épidémiologique 2026", declaration = TRUE, legende = FALSE) {
+pl_style <- function(p, cfg, titre_y = NULL, titre_x = "Semaine épidémiologique 2026", declaration = TRUE, legende = FALSE, nom_declaration = "Déclaration") {
   x_decl <- cfg$epidemie$semaine_rupture - 0.5
   titre_axe <- function(texte) list(text = texte %||% "", font = list(size = 11, color = COUL$muet))
   p |>
@@ -27,7 +27,7 @@ pl_style <- function(p, cfg, titre_y = NULL, titre_x = "Semaine épidémiologiqu
       legend = list(orientation = "h", x = 0, y = -0.28),
       shapes = if (declaration) list(list(type = "line", x0 = x_decl, x1 = x_decl, yref = "paper", y0 = 0, y1 = 1,
                                           line = list(color = COUL$encre2, width = 1, dash = "dot"))),
-      annotations = if (declaration) list(list(x = x_decl, y = 1, yref = "paper", text = "Déclaration", showarrow = FALSE,
+      annotations = if (declaration) list(list(x = x_decl, y = 1, yref = "paper", text = nom_declaration, showarrow = FALSE,
                                                xanchor = "center", yanchor = "bottom", font = list(size = 10, color = COUL$muet)))
     ) |>
     plotly::config(displayModeBar = FALSE, locale = "fr")

@@ -38,10 +38,12 @@ ui <- proteger_ui(page_navbar(
     div(class = "note",
         strong("Source : "), APP$ids$fichier, br(),
         strong("Empreinte : "), substr(APP$ids$sha256, 1, 12), "…", br(),
-        strong("Données jusqu'à : "), paste0("S", APP$S_max))
+        strong("Données jusqu'à : "), paste0("S", APP$S_max), br(),
+        strong("Années passées : "), if (length(APP$historique)) paste(names(APP$historique), collapse = ", ") else "non chargées")
   ),
   nav_panel("Vue d'ensemble", icon = bsicons::bs_icon("speedometer2"), mod_apercu_ui("apercu")),
   nav_panel("Maladies", icon = bsicons::bs_icon("activity"), mod_maladies_ui("maladies")),
+  nav_panel("Années", icon = bsicons::bs_icon("calendar-range"), mod_annees_ui("annees", APP)),
   nav_panel("Zones de santé", icon = bsicons::bs_icon("geo-alt"), mod_zones_ui("zones")),
   nav_panel("Paludisme", icon = bsicons::bs_icon("droplet"), mod_paludisme_ui("paludisme")),
   nav_panel("Ebola", icon = bsicons::bs_icon("shield-exclamation"), mod_ebola_ui("ebola")),
@@ -83,6 +85,7 @@ server <- function(input, output, session) {
 
   mod_apercu_server("apercu", APP, S, ids_S)
   mod_maladies_server("maladies", APP, S, ids_S)
+  mod_annees_server("annees", APP, S)
   mod_zones_server("zones", APP, S, ids_S)
   mod_paludisme_server("paludisme", APP, S, ids_S)
   mod_ebola_server("ebola", APP, S, ids_S)
