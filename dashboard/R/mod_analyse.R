@@ -31,7 +31,7 @@ mod_analyse_server <- function(id, app) {
         pl <- s[s$analyse == placebo, ]
         tr <- s[s$analyse == tendance, ]
         tibble::tibble(code = code, issue = libelle(code, app$cfg), rrr = x$principal$rrr, bas = x$principal$bas, haut = x$principal$haut,
-                       p_holm = x$principal$p_holm %||% NA_real_, p_pre = x$evenement$p_pre,
+                       p_holm = if ("p_holm" %in% names(x$principal)) x$principal$p_holm else NA_real_, p_pre = x$evenement$p_pre,
                        placebo_ok = pl$bas <= 1 & pl$haut >= 1, placebo = virgule(sprintf("%.2f (%.2f–%.2f)", pl$rrr, pl$bas, pl$haut)),
                        tendance_ok = tr$haut < 1, tendance = virgule(sprintf("%.2f (%.2f–%.2f)", tr$rrr, tr$bas, tr$haut)))
       }) |> dplyr::bind_rows()

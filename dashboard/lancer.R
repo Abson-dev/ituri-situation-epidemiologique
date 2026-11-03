@@ -3,9 +3,11 @@ args <- commandArgs(trailingOnly = TRUE)
 navigateur <- !"--sans-navigateur" %in% args
 port_arg <- sub("--port=", "", grep("^--port=", args, value = TRUE))
 if ("--demo" %in% args) Sys.setenv(ITURI_DEMO = "1")
+# Lancement sur ce poste : pas de connexion, l'application n'écoute que sur 127.0.0.1.
+if (!"--avec-connexion" %in% args) Sys.setenv(ITURI_LOCAL = "1")
 
 paquets <- c("bsicons", "bslib", "digest", "dplyr", "DT", "fixest", "flextable", "ggplot2", "here", "knitr", "mgcv", "officer", "patchwork",
-             "plotly", "ragg", "reactable", "readr", "readxl", "rmarkdown", "scales", "shiny", "tibble", "tidyr", "writexl", "yaml", "zip")
+             "plotly", "ragg", "reactable", "readr", "readxl", "rmarkdown", "scales", "shiny", "shinymanager", "tibble", "tidyr", "writexl", "yaml", "zip")
 manquants <- paquets[!vapply(paquets, requireNamespace, logical(1), quietly = TRUE)]
 if (length(manquants)) {
   message("Installation des paquets manquants : ", paste(manquants, collapse = ", "))

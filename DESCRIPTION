@@ -24,6 +24,8 @@ Imports:
     rmarkdown,
     scales,
     shiny,
+    shinymanager,
+    rsconnect,
     testthat,
     tibble,
     tidyr,

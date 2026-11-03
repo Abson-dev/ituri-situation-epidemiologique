@@ -7,6 +7,7 @@ library(bslib)
 
 for (f in list.files(here::here("R"), pattern = "\\.R$", full.names = TRUE)) source(f, encoding = "UTF-8")
 
+verifier_auth()
 APP <- charger_app()
 
 theme <- bs_theme(
@@ -15,7 +16,7 @@ theme <- bs_theme(
   "font-size-base" = "0.92rem", "border-radius" = "0.5rem"
 )
 
-ui <- page_navbar(
+ui <- proteger_ui(page_navbar(
   id = "page",
   title = "Ituri · Surveillance épidémiologique",
   theme = theme,
@@ -45,9 +46,10 @@ ui <- page_navbar(
   nav_panel("Qualité des données", icon = bsicons::bs_icon("clipboard-check"), mod_qualite_ui("qualite")),
   nav_panel("Analyse d'impact", icon = bsicons::bs_icon("graph-down"), mod_analyse_ui("analyse")),
   nav_panel("Données", icon = bsicons::bs_icon("table"), mod_donnees_ui("donnees"))
-)
+))
 
 server <- function(input, output, session) {
+  proteger_serveur()
   S <- reactive(as.integer(input$semaine))
 
   # Comme le rapport : seules les données disponibles jusqu'à S sont visibles, règles de rupture comprises.

@@ -6,6 +6,33 @@ Double-cliquer sur **`Lancer_tableau_de_bord.bat`**. Le navigateur s'ouvre ; gar
 
 L'application n'est accessible que depuis cet ordinateur. Sans base réelle, elle démarre sur des données synthétiques, signalées par un bandeau. `Lancer_tableau_de_bord.bat --demo` force ce mode.
 
+## Publier avec connexion
+
+Le lancement par le `.bat` reste sans connexion, car il n'est accessible que depuis cet ordinateur. Toute autre exécution exige une connexion et refuse de démarrer sans base de comptes.
+
+**Une seule fois,** configurer le compte shinyapps.io avec le jeton de sa page *Tokens* :
+
+```
+Rscript -e "rsconnect::setAccountInfo(name='COMPTE', token='JETON', secret='SECRET')"
+```
+
+**Créer les comptes.** Cette commande remplace toute la base, donc il faut lister tous les comptes à conserver :
+
+```
+Rscript dashboard/gerer_comptes.R prenom.nom autre.compte
+```
+
+Les mots de passe sont dans `dashboard/comptes_mots_de_passe.csv`. Transmettez-les individuellement, par un canal sûr, puis supprimez ce fichier.
+
+**Publier :**
+
+```
+Rscript dashboard/publier.R            # affiche ce qui serait envoyé
+Rscript dashboard/publier.R --publier  # envoie
+```
+
+Pour changer de mots de passe ou mettre à jour les données, recommencer les deux dernières étapes. Les données réelles et les résultats provisoires sont visibles par tout compte connecté.
+
 ## Pages
 
 | Page | Question à laquelle elle répond |

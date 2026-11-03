@@ -21,6 +21,12 @@ docs/plan_analyse.md
 rapports/article.Rmd
 config.local.yml
 
+# Comptes et secrets de connexion, publication
+.Renviron
+*.sqlite
+dashboard/comptes_*
+rsconnect/
+
 # Marque MSF
 assets/logo_msf.png
 
