@@ -31,6 +31,15 @@ Rscript dashboard/publier.R            # affiche ce qui serait envoyé
 Rscript dashboard/publier.R --publier  # envoie
 ```
 
+**Publier un second site sans remplacer le premier :**
+
+```
+Rscript dashboard/publier.R --demo            # affiche ce qui serait envoyé
+Rscript dashboard/publier.R --demo --publier  # crée ituri-surveillance-demo
+```
+
+Ce site ne contient que des données synthétiques, sans logo, et utilise les mêmes comptes. `--nom=mon-site` choisit un autre nom. Un nom déjà utilisé est refusé, sauf avec `--mettre-a-jour`, et le site de démonstration ne peut jamais remplacer `ituri-surveillance`.
+
 Pour changer de mots de passe ou mettre à jour les données, recommencer les deux dernières étapes. Les données réelles et les résultats provisoires sont visibles par tout compte connecté.
 
 ## Pages
