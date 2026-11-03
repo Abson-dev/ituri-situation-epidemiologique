@@ -17,11 +17,16 @@ verifier_auth <- function() {
   invisible(TRUE)
 }
 
-proteger_ui <- function(ui) {
+proteger_ui <- function(ui, logo = NULL) {
   if (!auth_requise()) return(ui)
   shinymanager::secure_app(ui, language = "fr", enable_admin = FALSE,
-                           tags_top = shiny::tags$h4("Ituri · Surveillance épidémiologique"),
-                           tags_bottom = shiny::tags$p("Accès réservé aux personnes autorisées."))
+                           head_auth = shiny::tags$link(rel = "stylesheet", href = "style.css"),
+                           tags_top = shiny::tagList(
+                             if (!is.null(logo)) shiny::img(src = logo, alt = "Médecins Sans Frontières", class = "connexion-logo"),
+                             shiny::h1(class = "connexion-titre", "Surveillance épidémiologique"),
+                             shiny::p(class = "connexion-lieu", "Province de l'Ituri, RDC")
+                           ),
+                           tags_bottom = shiny::p(class = "connexion-pied", "Accès réservé aux personnes autorisées."))
 }
 
 proteger_serveur <- function() {

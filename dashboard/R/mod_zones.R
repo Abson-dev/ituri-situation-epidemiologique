@@ -1,10 +1,12 @@
 mod_zones_ui <- function(id) {
   ns <- NS(id)
   page(
+    entete_page("Zones de santé", "Fiche d'une zone : rapportage, maladies et exposition à Ebola", "geo-alt", uiOutput(ns("semaine"))),
     uiOutput(ns("filtre")),
     uiOutput(ns("kpis")),
     ligne(c(7, 5),
-      carte_tableau(textOutput(ns("titre"), inline = TRUE), reactable::reactableOutput(ns("table")), 556),
+      carte_tableau(textOutput(ns("titre"), inline = TRUE), reactable::reactableOutput(ns("table")), 556,
+                    note = "– : aucune ligne dans la base pour cette semaine, ce qui n'est pas un zéro confirmé."),
       pile(
         carte_graphe("Paludisme suspect : cas", plotly::plotlyOutput(ns("g_palu"), height = "100%"), 270),
         carte_graphe("Fièvre typhoïde : cas", plotly::plotlyOutput(ns("g_typh"), height = "100%"), 270)
@@ -16,6 +18,7 @@ mod_zones_ui <- function(id) {
 mod_zones_server <- function(id, app, S, ids_S) {
   moduleServer(id, function(input, output, session) {
     ns <- session$ns
+    output$semaine <- rendu_puce_semaine(S, app$cfg)
     output$filtre <- renderUI(div(class = "filtres", selectInput(ns("zone"), "Zone de santé", choix_zones(app), width = "340px")))
     z <- reactive({ req(input$zone); input$zone })
     dz <- reactive(dplyr::filter(ids_S()$donnees, zs == z()))
@@ -34,10 +37,10 @@ mod_zones_server <- function(id, app, S, ids_S) {
       msg <- if (nrow(rup) && !is.na(rup$debut_rupture)) paste0("Confirmation interrompue depuis S", rup$debut_rupture) else "Cumul depuis S1"
       layout_column_wrap(
         width = "190px", fill = FALSE,
-        kpi("Population de référence", n_fr(pop), "Dénominateur à valider", "people"),
-        kpi("Semaines rapportées", paste0(r$sem_rapportees, " / ", s), paste0(pct_fr(r$couverture_4s, 0), " sur 4 semaines"), "broadcast"),
-        kpi("Paludisme : confirmés / suspects", pct_fr(if (cs$cas > 0) cc$cas / cs$cas else NA), msg, "droplet"),
-        kpi("Cas confirmés d'Ebola", n_fr(mve), paste0("Sitrep ", app$cfg$epidemie$sitrep_exposition), "shield-exclamation")
+        kpi("Population de référence", n_fr(pop), "Dénominateur à valider", "people", "ardoise"),
+        kpi("Semaines rapportées", paste0(r$sem_rapportees, " / ", s), paste0(pct_fr(r$couverture_4s, 0), " sur 4 semaines"), "broadcast", "ardoise"),
+        kpi("Paludisme : confirmés / suspects", pct_fr(if (cs$cas > 0) cc$cas / cs$cas else NA), msg, "droplet", "bleu"),
+        kpi("Cas confirmés d'Ebola", n_fr(mve), paste0("Sitrep ", app$cfg$epidemie$sitrep_exposition), "shield-exclamation", "orange")
       )
     })
 
@@ -53,11 +56,7 @@ mod_zones_server <- function(id, app, S, ids_S) {
       for (cl in setdiff(sc, names(x))) x[[cl]] <- NA_real_
       x <- x |> dplyr::mutate(Maladie = libelle(maladie, app$cfg)) |>
         dplyr::select(Maladie, dplyr::all_of(sc), dplyr::all_of(paste0("Décès S", s)), `Cumul 2026`, `Décès 2026`)
-      num <- setdiff(names(x), "Maladie")
-      tableau(x, lignes = 30, columns = c(
-        list(Maladie = reactable::colDef(minWidth = 150)),
-        stats::setNames(lapply(num, function(.) reactable::colDef(format = reactable::colFormat(separators = TRUE, locales = "fr-FR"), na = "–", minWidth = 50, align = "right")), num)
-      ))
+      tableau(x, lignes = 30, columns = colonnes_maladies(x, s, largeur_libelle = 150, largeur_nombre = 50))
     })
     output$g_palu <- plotly::renderPlotly(pl_barres(serie_province(dz(), "PALUDISME SUSP", S()), "cas", "cas suspects", app$cfg))
     output$g_typh <- plotly::renderPlotly(pl_barres(serie_province(dz(), "FIEVRE TYPHOIDE", S()), "cas", "cas", app$cfg))

@@ -1,6 +1,7 @@
 mod_analyse_ui <- function(id) {
   ns <- NS(id)
   page(
+    entete_page("Analyse d'impact", "Association entre l'exposition à Ebola et les autres maladies notifiées", "graph-down"),
     div(class = "attention serieux", bsicons::bs_icon("exclamation-triangle-fill"),
         div(strong("Résultats exploratoires, non publiés et non diffusables."),
             div(class = "detail", "Sans base 2025, la saisonnalité propre à chaque zone n'est pas écartée. Une baisse peut refléter moins de consultations, moins de notifications ou moins de maladie."))),
@@ -64,9 +65,10 @@ mod_analyse_server <- function(id, app) {
                          `Tendance préalable (p)` = p(p_pre), `Placebo (IC 95 %)` = placebo,
                          `Test placebo` = ifelse(placebo_ok, "Passé", "Échoué"), `Avec tendances par zone` = tendance,
                          `Hors de 1 avec tendances` = ifelse(tendance_ok, "Oui", "Non"))
-      tableau(x, lignes = 10, columns = list(`Résultat` = reactable::colDef(minWidth = 190),
-        `Test placebo` = reactable::colDef(cell = function(v) span(class = paste("pastille", if (v == "Passé") "ok" else "critique"), v)),
-        `Hors de 1 avec tendances` = reactable::colDef(cell = function(v) span(class = paste("pastille", if (v == "Oui") "ok" else "attention"), v))))
+      tableau(x, lignes = 10, columns = list(`Résultat` = col_libelle(190),
+        `Ratio (IC 95 %)` = reactable::colDef(class = "cell-cumul", minWidth = 130),
+        `Test placebo` = reactable::colDef(align = "center", cell = function(v) pastille(v, if (v == "Passé") "ok" else "critique")),
+        `Hors de 1 avec tendances` = reactable::colDef(align = "center", cell = function(v) pastille(v, if (v == "Oui") "ok" else "attention"))))
     })
   })
 }

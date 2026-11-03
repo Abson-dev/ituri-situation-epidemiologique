@@ -9,16 +9,18 @@ for (f in list.files(here::here("R"), pattern = "\\.R$", full.names = TRUE)) sou
 
 verifier_auth()
 APP <- charger_app()
+LOGO <- logo_msf_src()
 
 theme <- bs_theme(
-  version = 5, primary = "#1c5cab", secondary = "#52514e", bg = "#ffffff", fg = "#0b0b0b",
+  version = 5, primary = "#c40000", secondary = "#4d4f53", bg = "#ffffff", fg = "#17191c",
   base_font = font_collection("Segoe UI", "system-ui", "-apple-system", "sans-serif"),
   "font-size-base" = "0.92rem", "border-radius" = "0.5rem"
 )
 
 ui <- proteger_ui(page_navbar(
   id = "page",
-  title = "Ituri · Surveillance épidémiologique",
+  title = marque(LOGO),
+  window_title = "Ituri · Surveillance épidémiologique",
   theme = theme,
   fillable = FALSE,
   header = tags$head(tags$link(rel = "stylesheet", href = "style.css")),
@@ -46,7 +48,7 @@ ui <- proteger_ui(page_navbar(
   nav_panel("Qualité des données", icon = bsicons::bs_icon("clipboard-check"), mod_qualite_ui("qualite")),
   nav_panel("Analyse d'impact", icon = bsicons::bs_icon("graph-down"), mod_analyse_ui("analyse")),
   nav_panel("Données", icon = bsicons::bs_icon("table"), mod_donnees_ui("donnees"))
-))
+), logo = LOGO)
 
 server <- function(input, output, session) {
   proteger_serveur()

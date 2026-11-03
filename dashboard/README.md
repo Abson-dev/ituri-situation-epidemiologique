@@ -61,8 +61,11 @@ dashboard/
 ├── app.R                        Navigation et sélecteur de semaine
 ├── R/donnees_app.R              Chargement et calculs
 ├── R/graphiques.R               Graphiques et tableaux
+├── R/identite.R                 Logo, en-têtes de page et chiffres clés
 ├── R/mod_*.R                    Une page par fichier
 └── www/style.css                Présentation
 ```
+
+Le logo MSF (`assets/logo_msf.png`) n'est pas versionné. Il s'affiche seulement sur les données réelles, si le fichier est présent : la démonstration n'en a pas.
 
 Le nettoyage et les indicateurs viennent de `../R/` : tableau de bord et rapports affichent les mêmes chiffres.

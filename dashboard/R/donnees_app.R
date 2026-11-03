@@ -53,13 +53,38 @@ evolution_comparable <- function(d, code, S) {
   a <- sum(x$cas[x$semaine == S])
   b <- sum(x$cas[x$semaine == S - 1L])
   list(valeur = sum(d$cas[d$maladie == code & d$semaine == S]),
-       variation = if (b > 0) (a - b) / b else NA_real_, n_zones = length(communes))
+       variation = if (b > 0) (a - b) / b else NA_real_, base = b, n_zones = length(communes))
 }
 
-texte_evolution <- function(e, S) {
-  if (is.na(e$variation)) return("Pas de comparaison possible")
-  sprintf("%s%s par rapport à S%d, sur %d zones comparables",
-          if (e$variation >= 0) "+" else "−", pct_fr(abs(e$variation)), S - 1L, e$n_zones)
+# Le journal reste en anglais dans le supplément de l'article ; ici, il est affiché en français.
+JOURNAL_FR <- c(
+  "Manual corrections (data/corrections_manuelles.csv)" = "Corrections manuelles",
+  "Applied before all other rules" = "Appliquées avant toutes les autres règles",
+  "Rows without disease or zone" = "Lignes sans maladie ni zone",
+  "Removed (no data recorded)" = "Supprimées (aucune donnée)",
+  "Week-start date inconsistent with week number" = "Date de début incohérente avec le numéro de semaine",
+  "Date recomputed from week number" = "Date recalculée à partir du numéro de semaine",
+  "Exact duplicate rows" = "Lignes strictement dupliquées",
+  "Removed" = "Supprimées",
+  "Conflicting zone-week-disease records" = "Enregistrements en conflit (zone, semaine, maladie)",
+  "Case total differs from sum of age groups" = "Total des cas différent de la somme des tranches d'âge",
+  "Total replaced by sum of age groups" = "Total remplacé par la somme des tranches d'âge",
+  "Zones with more than one population denominator" = "Zones avec plusieurs dénominateurs de population",
+  "Modal value from week 3 onward used as single denominator" = "Valeur modale à partir de S3 retenue comme dénominateur unique",
+  "Confirmed malaria exceeds suspected malaria" = "Paludisme confirmé supérieur au paludisme suspect",
+  "Week excluded from positivity" = "Semaine exclue du rapport confirmés / suspects",
+  "Zones with abrupt loss of malaria confirmation" = "Zones avec perte brutale de la confirmation du paludisme",
+  "Confirmed malaria set to missing from onset of break" = "Cas confirmés mis à manquant dès le début de la rupture",
+  "Zones where confirmed equals suspected malaria at baseline" = "Zones où confirmés = suspects en période de référence",
+  "Confirmed malaria set to missing for those weeks" = "Cas confirmés mis à manquant pour ces semaines"
+)
+
+traduire_journal <- function(x) {
+  x <- sub("^Rule applied: (.+) \\(alternatives tested in sensitivity analyses\\)$",
+           "Règle appliquée : \\1 (autres règles testées en analyse de sensibilité)", x)
+  connu <- x %in% names(JOURNAL_FR)
+  x[connu] <- JOURNAL_FR[x[connu]]
+  unname(x)
 }
 
 serie_cible <- function(d, code, S, zone = NULL) {

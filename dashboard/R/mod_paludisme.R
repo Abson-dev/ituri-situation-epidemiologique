@@ -1,6 +1,7 @@
 mod_paludisme_ui <- function(id) {
   ns <- NS(id)
   page(
+    entete_page("Paludisme", "Confirmés et suspects, et zones où la confirmation s'est interrompue", "droplet", uiOutput(ns("semaine"))),
     uiOutput(ns("message")),
     ligne(c(6, 6),
       carte_graphe("Rapport confirmés / suspects, province", plotly::plotlyOutput(ns("g_pos"), height = "100%"), 300),
@@ -15,6 +16,7 @@ mod_paludisme_ui <- function(id) {
 
 mod_paludisme_server <- function(id, app, S, ids_S) {
   moduleServer(id, function(input, output, session) {
+    output$semaine <- rendu_puce_semaine(S, app$cfg)
     output$message <- renderUI({
       pos <- positivite_province(ids_S(), S())
       p <- pos[pos$semaine == S(), ]
@@ -54,9 +56,14 @@ mod_paludisme_server <- function(id, app, S, ids_S) {
         dplyr::left_join(m, by = "zs") |>
         dplyr::arrange(debut_rupture) |>
         dplyr::transmute(Zone = nom_zone(zs), Depuis = ifelse(is.na(debut_rupture), "–", paste0("S", debut_rupture)),
-                         `Base` = pct_fr(positivite_base, 0), `Conf. = susp.` = ifelse(conf_egal_susp, "Oui", "Non"), `Cas Ebola` = mve)
-      col <- reactable::colDef(minWidth = 62)
-      tableau(x, lignes = 30, columns = list(Depuis = col, Base = col, `Conf. = susp.` = col, `Cas Ebola` = col))
+                         Base = positivite_base, `Conf. = susp.` = ifelse(conf_egal_susp, "Oui", "Non"), `Cas Ebola` = mve)
+      tableau(x, lignes = 30, columns = list(
+        Zone = col_libelle(100),
+        Depuis = reactable::colDef(minWidth = 66, align = "center", cell = function(v) if (v == "–") span(class = "muet", v) else pastille(v, "serieux")),
+        Base = reactable::colDef(minWidth = 60, align = "right", cell = function(v) pct_fr(v, 0)),
+        `Conf. = susp.` = reactable::colDef(minWidth = 62, align = "center", cell = function(v) if (v == "Oui") pastille(v, "attention") else span(class = "muet", v)),
+        `Cas Ebola` = col_nombre(58, style = function(v) if (!is.na(v) && v > 0) list(color = "#b4461a", fontWeight = 700))
+      ))
     })
   })
 }

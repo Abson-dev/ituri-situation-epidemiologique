@@ -1,6 +1,7 @@
 mod_maladies_ui <- function(id) {
   ns <- NS(id)
   page(
+    entete_page("Maladies", "Évolution d'une maladie, dans la province ou dans une zone", "activity", uiOutput(ns("semaine"))),
     uiOutput(ns("filtres")),
     ligne(c(8, 4),
       pile(
@@ -16,6 +17,7 @@ mod_maladies_ui <- function(id) {
 mod_maladies_server <- function(id, app, S, ids_S) {
   moduleServer(id, function(input, output, session) {
     ns <- session$ns
+    output$semaine <- rendu_puce_semaine(S, app$cfg)
     output$filtres <- renderUI({
       layout_columns(
         col_widths = c(5, 4, 3), class = "filtres",
@@ -43,7 +45,7 @@ mod_maladies_server <- function(id, app, S, ids_S) {
       m <- input$mesure %||% "cas"
       pl_barres(serie(), m, if (m == "taux") "pour 100 000 hab." else "cas", app$cfg)
     })
-    output$g_deces <- plotly::renderPlotly(pl_barres(serie(), "deces", "décès", app$cfg, COUL$serie2))
+    output$g_deces <- plotly::renderPlotly(pl_barres(serie(), "deces", "décès", app$cfg, COUL_DECES))
     output$g_rang <- plotly::renderPlotly({
       x <- d() |> dplyr::filter(maladie == code(), semaine > S() - 4L) |> dplyr::group_by(zs) |>
         dplyr::summarise(cas = sum(cas), .groups = "drop") |> dplyr::filter(cas > 0) |>
