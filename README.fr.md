@@ -49,7 +49,7 @@ Les sorties vont dans `outputs/demo/` et portent la mention « données synthét
 
 ## Chaque semaine
 
-1. Déposer la nouvelle base dans `data/raw/`, sans la modifier : `Base_DPS_Ituri_Week44.xlsx`.
+1. Déposer la nouvelle base dans `data/raw/`, sans la modifier. Le nom doit finir par le numéro de semaine : `IDSR Week44.xlsx` ou `Base_DPS_Ituri_Week44.xlsx`.
 2. Si disponibles, compléter :
    - `data/external/mve_provinces.csv` et `mve_zones.csv` : nouveau sitrep (lignes ajoutées, anciennes conservées) ;
    - `data/external/completude_as.csv` : complétude par aire de santé ;

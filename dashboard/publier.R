@@ -59,9 +59,10 @@ if (demo) {
                 lister("data/synthetic"), modele)
 } else {
   # Dernière base et résultats correspondant à cette base uniquement.
-  bases <- list.files(file.path(racine, "data/raw"), pattern = "^Base_DPS_Ituri_Week[0-9]+\\.xlsx$", full.names = TRUE)
+  motif <- yaml::read_yaml(file.path(racine, "config.yml"))$donnees$motif_fichier
+  bases <- list.files(file.path(racine, "data/raw"), pattern = motif, full.names = TRUE)
   if (!length(bases)) stop("Aucune base réelle dans data/raw.", call. = FALSE)
-  base <- bases[which.max(as.integer(sub(".*Week([0-9]+)\\.xlsx$", "\\1", bases)))]
+  base <- bases[which.max(as.integer(sub(motif, "\\1", basename(bases))))]
   modele <- modele_de(digest::digest(file = base, algo = "sha256"))
   fichiers <- c(
     file.path(racine, obligatoires),

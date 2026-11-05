@@ -191,14 +191,20 @@ z_rg <- d |> dplyr::filter(maladie == "ROUGEOLE") |> dplyr::group_by(zs) |> dply
 rec2 <- zones_recentes(d, "ROUGEOLE", S, 2)
 al <- alertes_rougeole(d, S, cfg)
 dc2 <- sum(d$deces[d$maladie == "ROUGEOLE" & d$semaine > S - 2])
-absentes <- setdiff(cfg$zones_msf, zones_recentes(d, "ROUGEOLE", S, 4)$zs)
+sans_cas <- zones_sans_cas(d, "ROUGEOLE", cfg$zones_msf, S, 4)
 cat(sprintf("On note un cumul de %s cas suspects dont %s décès (létalité : %s). La zone de %s a notifié le plus de cas depuis le début de l'année (%s). Au cours des deux dernières semaines, %s cas et %s décès ont été notifiés : %s.\n\n",
   n_fr(c_rg$cas), n_fr(c_rg$deces), pct_fr(c_rg$deces / c_rg$cas, 2), nom_zone(z_rg$zs), n_fr(z_rg$c), n_fr(sum(rec2$cas)), n_fr(dc2), texte_zones(rec2)))
 cat(if (nrow(al)) sprintf("**Seuil d'alerte franchi en S%d (dédoublement par rapport à la moyenne des %d semaines précédentes) : %s.**\n\n",
     S, cfg$seuils$rougeole_fenetre, enumerer(paste0(nom_zone(al$zs), " (", al$cas_S, " cas)")))
   else sprintf("À la fin de la semaine %d, aucune zone n'avait franchi le seuil d'alerte (dédoublement par rapport à la moyenne des %d semaines précédentes, au moins %d cas). Ce seuil automatique ne compare pas aux années antérieures, faute de base historique.\n\n",
     S, cfg$seuils$rougeole_fenetre, cfg$seuils$rougeole_min_cas))
-cat(sprintf("Zones d'intervention MSF sans cas suspect au cours des quatre dernières semaines : %s.\n", enumerer(nom_zone(absentes))))
+if (length(sans_cas$completes) || !length(sans_cas$incompletes)) {
+  cat(sprintf("Zones d'intervention MSF ayant rapporté chaque semaine, sans cas suspect au cours des quatre dernières semaines : %s.\n\n", enumerer(nom_zone(sans_cas$completes))))
+}
+if (length(sans_cas$incompletes)) {
+  detail <- vapply(names(sans_cas$incompletes), function(z) paste0(nom_zone(z), " (", enumerer(paste0("S", sans_cas$incompletes[[z]])), ")"), character(1))
+  cat(sprintf("Zones d'intervention MSF sans cas suspect notifié, mais sans donnée pour certaines semaines, ce qui ne permet pas de conclure à l'absence de cas : %s.\n", enumerer(detail)))
+}
 ```
 
 ```{r fig-rougeole, fig.width=6.6, fig.height=2.2, fig.cap=paste0("Figure 2. Cas suspects de rougeole par semaine, Ituri, S1-S", S, ".")}
@@ -221,13 +227,22 @@ c_s <- cumul_maladie(d, "PALUDISME SUSP", S)
 c_c <- cumul_maladie(d, "PALUDISME CONF", S)
 pos <- positivite_province(ids, S)
 ps <- pos[pos$semaine == S, ]
-pm3 <- pos[pos$semaine == S - 3L, ]
-ser <- serie_province(d, "PALUDISME CONF", S)
+ser <-serie_province(d, "PALUDISME CONF", S)
 cS <- ser$cas[ser$semaine == S]; cM <- ser$cas[ser$semaine == S - 3L]
 rup <- ids$ruptures |> dplyr::filter(!is.na(debut_rupture)) |> dplyr::arrange(debut_rupture)
-cat(sprintf("Depuis le début de l'année, %s cas suspects de paludisme ont été notifiés dont %s confirmés, soit un rapport confirmés/suspects de %s, et %s décès parmi les cas confirmés. Le nombre de cas confirmés est passé de %s en S%d à %s en S%d (%s %s). Ce rapport est de %s en S%d, contre %s en S%d.\n\n",
-  n_fr(c_s$cas), n_fr(c_c$cas), pct_fr(c_c$cas / c_s$cas), n_fr(c_c$deces), n_fr(cM), S - 3L, n_fr(cS), S,
-  if (cS < cM) "diminution de" else "augmentation de", pct_fr(abs(cS - cM) / cM), pct_fr(ps$brute), S, pct_fr(pm3$brute), S - 3L))
+cat(sprintf("Depuis le début de l'année, %s cas suspects de paludisme ont été notifiés dont %s confirmés, soit un rapport confirmés/suspects de %s, et %s décès parmi les cas confirmés. ",
+  n_fr(c_s$cas), n_fr(c_c$cas), pct_fr(c_c$cas / c_s$cas), n_fr(c_c$deces)))
+evo <- evolution_palu(d, S - 3L, S)
+if (evo$n_zones > 0 && evo$conf1 > 0 && evo$susp1 > 0 && evo$susp2 > 0) {
+  cat(sprintf("Sur les %d zones ayant rapporté en S%d et en S%d, le nombre de cas confirmés est passé de %s à %s (%s %s) et le rapport confirmés/suspects de %s à %s. ",
+    evo$n_zones, S - 3L, S, n_fr(evo$conf1), n_fr(evo$conf2),
+    if (evo$conf2 < evo$conf1) "diminution de" else "augmentation de", pct_fr(abs(evo$conf2 - evo$conf1) / evo$conf1),
+    pct_fr(evo$conf1 / evo$susp1), pct_fr(evo$conf2 / evo$susp2)))
+} else {
+  cat(sprintf("L'évolution entre S%d et S%d ne peut pas être calculée sur des zones comparables. ", S - 3L, S))
+}
+cat(sprintf("Toutes zones confondues, la province compte %s confirmés en S%d (%d zones ayant rapporté) et %s en S%d (%d zones).\n\n",
+  n_fr(cM), S - 3L, dplyr::n_distinct(d$zs[d$semaine == S - 3L]), n_fr(cS), S, dplyr::n_distinct(d$zs[d$semaine == S])))
 if (nrow(rup)) {
   cat(sprintf("**Point de vigilance : la tendance provinciale des cas confirmés ne doit pas être lue comme une baisse de la transmission sans vérification.** Dans %d zones, le nombre de confirmés s'effondre brutalement alors que les suspects se maintiennent : %s. Ce profil évoque une rupture de TDR ou un arrêt de la déclaration des confirmés ; à vérifier avec les données de stock et les équipes de zone. Hors de ces zones, le rapport confirmés/suspects est de %s en S%d (%d zones évaluables).\n\n",
     nrow(rup), enumerer(paste0(nom_zone(rup$zs), " (depuis S", rup$debut_rupture, ")")), pct_fr(ps$corrigee), S, ps$zones_valides))

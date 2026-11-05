@@ -7,7 +7,8 @@ rapport:
   province: "Ituri"
 
 donnees:
-  motif_fichier: "^Base_DPS_Ituri_Week([0-9]+)\\.xlsx$"
+  # Le groupe capturé est la semaine : Base_DPS_Ituri_Week43.xlsx, IDSR Week44.xlsx.
+  motif_fichier: "^[A-Za-z_ ]*[Ww]eek ?([0-9]+)\\.xlsx$"
   origine_semaine1: "2025-12-29"   # lundi de la semaine 1 de 2026
   nb_zs_attendu: 36
 

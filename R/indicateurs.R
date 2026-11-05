@@ -115,6 +115,24 @@ positivite_province <- function(ids, S) {
     )
 }
 
+# Tendance sur les zones ayant rapporté aux deux semaines : une zone absente de l'une d'elles ne la déforme pas.
+evolution_palu <- function(d, S1, S2) {
+  zones <- intersect(d$zs[d$semaine == S1], d$zs[d$semaine == S2])
+  somme <- function(code, s) sum(d$cas[d$maladie == code & d$semaine == s & d$zs %in% zones], na.rm = TRUE)
+  list(n_zones = length(zones),
+       conf1 = somme("PALUDISME CONF", S1), conf2 = somme("PALUDISME CONF", S2),
+       susp1 = somme("PALUDISME SUSP", S1), susp2 = somme("PALUDISME SUSP", S2))
+}
+
+# Sépare les zones sans cas récent : une semaine sans donnée ne permet pas de conclure à l'absence de cas.
+zones_sans_cas <- function(d, code, zones, S, n = 4) {
+  semaines <- seq(max(1L, S - n + 1L), S)
+  sans <- setdiff(zones, zones_recentes(d, code, S, n)$zs)
+  manquantes <- lapply(sans, function(z) setdiff(semaines, d$semaine[d$zs == z]))
+  list(completes = sans[lengths(manquantes) == 0L],
+       incompletes = stats::setNames(manquantes[lengths(manquantes) > 0L], sans[lengths(manquantes) > 0L]))
+}
+
 dernier_sitrep <- function(S, cfg) {
   fin <- date_semaine(S, cfg) + 6L + 7L
   p <- readr::read_csv(chemin_donnees("external/mve_provinces.csv"), show_col_types = FALSE)

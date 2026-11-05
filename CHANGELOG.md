@@ -6,6 +6,8 @@
 - Personal details, manuscript text and values derived from real data moved to local, unversioned files.
 - Dashboard redesign: MSF colours, restyled login page, themed key figures and clearer tables. The logo stays out of the repository and only appears on real data.
 - Dashboard: new Années page comparing 2023 to 2026, and a year filter on the Données page. Synthetic history is generated for the demo and is never mixed with real data.
+- Input files may now be named `IDSR Week44.xlsx` as well as `Base_DPS_Ituri_Week44.xlsx`.
+- Weekly report: the malaria trend compares only zones that reported in both weeks, and the measles section no longer lists a zone with missing weeks as having no cases.
 
 ## 0.1.0
 
