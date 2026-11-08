@@ -47,6 +47,15 @@ tableau_maladies <- function(d, codes, S, cfg, n_sem = 6) {
     dplyr::select(-ordre)
 }
 
+# Cumuls de S1 à S, dans l'ordre de codes ; une maladie sans ligne compte zéro.
+cumul_annee <- function(d, codes, S) {
+  x <- d[d$maladie %in% codes & d$semaine <= S, ]
+  cas <- tapply(x$cas, factor(x$maladie, levels = codes), sum)
+  deces <- tapply(x$deces, factor(x$maladie, levels = codes), sum)
+  tibble::tibble(maladie = codes, cas = unname(dplyr::coalesce(as.numeric(cas), 0)),
+                 deces = unname(dplyr::coalesce(as.numeric(deces), 0)))
+}
+
 cumul_maladie <- function(d, code, S, zone = NULL) {
   x <- d[d$maladie == code & d$semaine <= S, ]
   if (!is.null(zone)) x <- x[x$zs == zone, ]

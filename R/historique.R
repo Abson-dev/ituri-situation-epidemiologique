@@ -1,10 +1,26 @@
-# Années antérieures : une base par année, de même structure que la base hebdomadaire.
-#   Données réelles        : data/raw/historique/Base_DPS_Ituri_2024.xlsx
+# Années antérieures : une base par année, de même structure que la base hebdomadaire. L'année est lue
+# dans le nom du fichier, par exemple :
+#   Données réelles        : data/raw/IDSR 2025_WEEK52.xls ou data/raw/historique/Base_DPS_Ituri_2024.xlsx
 #   Données synthétiques   : data/synthetic/raw/historique/Base_DPS_Ituri_2024.xlsx
 # chemin_donnees() choisit le dossier selon le mode : un historique synthétique n'est jamais lu avec
 # des données réelles, car des chiffres inventés passeraient pour une référence.
 
-MOTIF_HISTORIQUE <- "^Base_DPS_Ituri_([0-9]{4})\\.xlsx$"
+fichiers_historique <- function(cfg) {
+  courante <- annee_courante(cfg)
+  hist <- bases_dossier(chemin_donnees("raw", "historique"))
+  hist <- hist[!is.na(hist$annee), ]
+  if (any(hist$annee >= courante)) {
+    stop("Historique : année postérieure aux années passées : ", paste(hist$fichier[hist$annee >= courante], collapse = ", "), call. = FALSE)
+  }
+  raw <- bases_dossier(chemin_donnees("raw"))
+  x <- rbind(hist, raw[!is.na(raw$annee) & raw$annee < courante, ])
+  doubles <- x$annee[duplicated(x$annee)]
+  if (length(doubles)) {
+    stop("Historique : plusieurs bases pour ", paste(unique(doubles), collapse = ", "), " : ",
+         paste(x$fichier[x$annee %in% doubles], collapse = ", "), ". En garder une seule.", call. = FALSE)
+  }
+  x[order(x$annee), ]
+}
 
 # Lundi de la semaine ISO 1, comme la semaine 1 de 2026 dans config.yml. À confirmer pour les vraies bases.
 origine_annee <- function(annee) {
@@ -15,11 +31,9 @@ origine_annee <- function(annee) {
 annee_courante <- function(cfg) as.integer(format(as.Date(cfg$donnees$origine_semaine1) + 3L, "%Y"))
 
 charger_historique <- function(cfg) {
-  dossier <- chemin_donnees("raw", "historique")
-  fichiers <- list.files(dossier, pattern = MOTIF_HISTORIQUE, full.names = TRUE)
-  annees <- as.integer(sub(MOTIF_HISTORIQUE, "\\1", basename(fichiers)))
-  autres <- annees >= annee_courante(cfg)
-  if (any(autres)) stop("Historique : année postérieure aux années passées : ", paste(annees[autres], collapse = ", "), call. = FALSE)
+  x <- fichiers_historique(cfg)
+  fichiers <- x$chemin
+  annees <- x$annee
   res <- lapply(seq_along(fichiers), function(i) {
     cfg_a <- cfg
     cfg_a$donnees$origine_semaine1 <- as.character(origine_annee(annees[i]))

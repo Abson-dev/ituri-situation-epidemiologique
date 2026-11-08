@@ -59,10 +59,11 @@ if (demo) {
                 lister("data/synthetic"), modele)
 } else {
   # Dernière base et résultats correspondant à cette base uniquement.
-  motif <- yaml::read_yaml(file.path(racine, "config.yml"))$donnees$motif_fichier
-  bases <- list.files(file.path(racine, "data/raw"), pattern = motif, full.names = TRUE)
-  if (!length(bases)) stop("Aucune base réelle dans data/raw.", call. = FALSE)
-  base <- bases[which.max(as.integer(sub(motif, "\\1", basename(bases))))]
+  # Mêmes règles de choix des fichiers que l'application.
+  for (f in lister("R", "\\.R$")) source(f, encoding = "UTF-8")
+  cfg <- lire_config()
+  base <- trouver_base(cfg)
+  historique <- fichiers_historique(cfg)$chemin
   modele <- modele_de(digest::digest(file = base, algo = "sha256"))
   fichiers <- c(
     file.path(racine, obligatoires),
@@ -70,7 +71,7 @@ if (demo) {
     lister("dashboard/R", "\\.R$"),
     lister("dashboard/www"),
     base,
-    lister("data/raw/historique", "^Base_DPS_Ituri_[0-9]{4}\\.xlsx$"),
+    historique,
     list.files(file.path(racine, "data"), pattern = "^corrections_manuelles_[0-9]{4}\\.csv$", full.names = TRUE),
     file.path(racine, "data/external", c("mve_provinces.csv", "mve_zones.csv", "rapport_s32_reference.csv", "completude_as.csv")),
     file.path(racine, "data/corrections_manuelles.csv"),

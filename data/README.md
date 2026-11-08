@@ -20,10 +20,10 @@ Les années passées alimentent la page « Années » du tableau de bord :
 
 | Fichier | Contenu | Source |
 |---|---|---|
-| `raw/historique/Base_DPS_Ituri_2024.xlsx` | Une base par année, de même structure que la base hebdomadaire | MSF |
+| `raw/historique/IDSR 2025_WEEK52.xls` | Une base par année, de même structure que la base hebdomadaire. L'année est lue dans le nom, et le fichier peut aussi être déposé dans `raw/` | DPS Ituri |
 | `corrections_manuelles_2024.csv` | Corrections validées pour cette année, facultatif | DPS |
 
-Les semaines sont comptées depuis le lundi de la semaine ISO 1 de chaque année. En mode réel, seul ce dossier est lu : un historique synthétique n'est jamais mélangé à des données réelles.
+Une base dont le nom porte une année passée n'est jamais prise pour la base hebdomadaire. Le format est lu dans le fichier : un `.xls` qui est en réalité un `.xlsx` se lit normalement. Les semaines sont comptées depuis le lundi de la semaine ISO 1 de chaque année. En mode réel, seul ce dossier est lu : un historique synthétique n'est jamais mélangé à des données réelles.
 
 Empreinte SHA-256 de la base utilisée pour l'analyse :
 

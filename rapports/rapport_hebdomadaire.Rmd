@@ -46,6 +46,17 @@ tab_style <- function(ft, taille = 8) {
     padding(padding.top = 1, padding.bottom = 1, part = "all") |>
     set_table_properties(layout = "autofit", width = 1)
 }
+# Année précédente, à période égale : une base historique illisible n'empêche pas le rapport, elle est signalée.
+a_prec <- annee_courante(cfg) - 1L
+hist <- tryCatch(suppressWarnings(charger_historique(cfg)), error = function(e) e)
+h_prec <- if (!inherits(hist, "error")) hist[[as.character(a_prec)]]
+ajouter_prec <- function(x, codes) {
+  if (is.null(h_prec)) return(x)
+  cp <- cumul_annee(h_prec$donnees, codes, S)
+  x[[paste0("Cumul ", a_prec)]] <- n_fr(cp$cas)
+  x[[paste0("Décès ", a_prec)]] <- n_fr(cp$deces)
+  x
+}
 notes_semaine <- here::here(if (mode_demo()) "data/synthetic/notes" else "notes", paste0("S", S, ".md"))
 sit <- dernier_sitrep(S, cfg)
 ```
@@ -126,7 +137,9 @@ x <- tg |>
   dplyr::select(Maladie, dplyr::all_of(sem_cols),
                 !!paste0("Décès S", S - 1L) := dc_prec, !!paste0("Décès S", S) := dc_S,
                 `Cumul 2026` = cumul, `Décès 2026` = cumul_dc)
-if (S == 32) {
+if (!is.null(h_prec)) {
+  x <- ajouter_prec(x, codes)
+} else if (S == 32) {
   r25 <- readr::read_csv(chemin_donnees("external/rapport_s32_reference.csv"), show_col_types = FALSE)
   x$`Cumul 2025` <- with(r25[match(codes, r25$maladie), ], ifelse(fiable_2025 == "oui", n_fr(cumul_2025), "à vérifier"))
   x$`Décès 2025` <- with(r25[match(codes, r25$maladie), ], ifelse(fiable_2025 == "oui", n_fr(deces_2025), "à vérifier"))
@@ -139,13 +152,18 @@ ta <- tableau_maladies(d, unlist(cfg$tableau_autres), S, cfg) |>
   dplyr::mutate(Syndrome = libelle(maladie, cfg), dplyr::across(c(dplyr::all_of(sem_cols), dc_prec, dc_S, cumul, cumul_dc), ~ n_fr(.x))) |>
   dplyr::select(Syndrome, dplyr::all_of(sem_cols),
                 !!paste0("Décès S", S - 1L) := dc_prec, !!paste0("Décès S", S) := dc_S,
-                `Cumul 2026` = cumul, `Décès 2026` = cumul_dc)
+                `Cumul 2026` = cumul, `Décès 2026` = cumul_dc) |>
+  ajouter_prec(unlist(cfg$tableau_autres))
 flextable(ta) |> tab_style(7.5)
 ```
 
 ```{r comparaison-2025, results="asis"}
-if (S != 32) {
-  cat("*Comparaison à 2025 non affichée : la base 2025 n'est pas disponible ; seuls les cumuls à S32 du rapport de référence ont été transcrits.*\n")
+if (!is.null(h_prec)) {
+  cat(sprintf("*%d : cumuls de S1 à S%d, à période égale, calculés sur la base %s.*\n", a_prec, S, h_prec$fichier))
+} else if (inherits(hist, "error")) {
+  cat(sprintf("*Comparaison à %d non affichée : %s*\n", a_prec, conditionMessage(hist)))
+} else if (S != 32) {
+  cat(sprintf("*Comparaison à %d non affichée : déposer la base %d dans `data/raw/historique/` (par exemple `IDSR %d_WEEK52.xls`).*\n", a_prec, a_prec, a_prec))
 } else {
   cat("*2025 : cumuls transcrits du rapport S32, non recalculables sans la base 2025. « À vérifier » signale une valeur incohérente dans ce rapport (voir `docs/anomalies_rapport_S32.md`).*\n")
 }
@@ -196,7 +214,7 @@ cat(sprintf("On note un cumul de %s cas suspects dont %s décès (létalité : %
   n_fr(c_rg$cas), n_fr(c_rg$deces), pct_fr(c_rg$deces / c_rg$cas, 2), nom_zone(z_rg$zs), n_fr(z_rg$c), n_fr(sum(rec2$cas)), n_fr(dc2), texte_zones(rec2)))
 cat(if (nrow(al)) sprintf("**Seuil d'alerte franchi en S%d (dédoublement par rapport à la moyenne des %d semaines précédentes) : %s.**\n\n",
     S, cfg$seuils$rougeole_fenetre, enumerer(paste0(nom_zone(al$zs), " (", al$cas_S, " cas)")))
-  else sprintf("À la fin de la semaine %d, aucune zone n'avait franchi le seuil d'alerte (dédoublement par rapport à la moyenne des %d semaines précédentes, au moins %d cas). Ce seuil automatique ne compare pas aux années antérieures, faute de base historique.\n\n",
+  else sprintf("À la fin de la semaine %d, aucune zone n'avait franchi le seuil d'alerte (dédoublement par rapport à la moyenne des %d semaines précédentes, au moins %d cas). Ce seuil automatique ne compare pas aux années antérieures.\n\n",
     S, cfg$seuils$rougeole_fenetre, cfg$seuils$rougeole_min_cas))
 if (length(sans_cas$completes) || !length(sans_cas$incompletes)) {
   cat(sprintf("Zones d'intervention MSF ayant rapporté chaque semaine, sans cas suspect au cours des quatre dernières semaines : %s.\n\n", enumerer(nom_zone(sans_cas$completes))))

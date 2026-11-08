@@ -13,18 +13,45 @@ lire_config <- function(chemin = here::here("config.yml")) {
   cfg
 }
 
-trouver_base <- function(cfg, semaine = NULL) {
-  dossier <- chemin_donnees("raw")
-  fichiers <- list.files(dossier, pattern = cfg$donnees$motif_fichier)
-  if (!length(fichiers)) stop("Aucune base trouvée dans ", dossier)
-  n <- as.integer(sub(cfg$donnees$motif_fichier, "\\1", fichiers))
+# Année et semaine lues dans le nom d'un classeur, NA si absentes :
+#   Base_DPS_Ituri_Week43.xlsx : NA, 43     IDSR 2025_WEEK52.xls : 2025, 52
+#   IDSR Week44.xlsx           : NA, 44     Base_DPS_Ituri_2024.xlsx : 2024, NA
+lire_nom_base <- function(noms) {
+  noms <- noms[grepl("\\.xlsx?$", noms, ignore.case = TRUE) & !startsWith(noms, "~$")]
+  motif_sem <- "^.*week[ _-]?([0-9]{1,2})\\.xlsx?$"
+  semaine <- ifelse(grepl(motif_sem, noms, ignore.case = TRUE), sub(motif_sem, "\\1", noms, ignore.case = TRUE), NA)
+  m <- regmatches(noms, regexpr("(?<![0-9])20[0-9]{2}(?![0-9])", noms, perl = TRUE), invert = NA)
+  annee <- vapply(m, function(x) if (length(x) == 3L) x[2] else NA_character_, character(1))
+  tibble::tibble(fichier = noms, annee = as.integer(annee), semaine = as.integer(semaine))
+}
+
+bases_dossier <- function(dossier) {
+  x <- lire_nom_base(list.files(dossier))
+  x$chemin <- file.path(dossier, x$fichier)
+  x
+}
+
+# Base hebdomadaire : un nom avec une semaine, sans année ou avec l'année en cours. Une base d'une année
+# passée (IDSR 2025_WEEK52.xls) ne peut jamais passer pour la semaine la plus récente.
+trouver_base <- function(cfg, semaine = NULL, dossier = chemin_donnees("raw")) {
+  x <- bases_dossier(dossier)
+  x <- x[!is.na(x$semaine) & (is.na(x$annee) | x$annee == annee_courante(cfg)), ]
+  if (!nrow(x)) stop("Aucune base de l'année en cours trouvée dans ", dossier, " (nom attendu : IDSR Week44.xlsx)")
+  n <- x$semaine
   # La base la plus récente couvrant la semaine demandée.
   i <- if (is.null(semaine)) which.max(n) else {
     ok <- which(n >= semaine)
     if (!length(ok)) stop("Aucune base ne couvre la semaine ", semaine)
     ok[which.max(n[ok])]
   }
-  file.path(dossier, fichiers[i])
+  x$chemin[i]
+}
+
+# Certains .xls reçus sont en réalité des .xlsx : le format est lu dans le fichier, pas dans son nom.
+lire_classeur <- function(chemin) {
+  format <- readxl::format_from_signature(chemin)
+  if (is.na(format)) stop("Fichier illisible comme classeur Excel : ", basename(chemin), call. = FALSE)
+  if (format == "xlsx") readxl::read_xlsx(chemin, guess_max = 20000) else readxl::read_xls(chemin, guess_max = 20000)
 }
 
 COL_CAS <- c("c328tnn", "c011mois", "c1259mois", "c515ans", "cp15ans")
@@ -47,7 +74,7 @@ appliquer_corrections <- function(brut, chemin) {
 # regle_doublons : "max" (par défaut), "somme" ou "retirer" (sensibilité).
 nettoyer_ids <- function(chemin, cfg, regle_doublons = cfg$nettoyage$regle_doublons,
                          chemin_corrections = chemin_donnees("corrections_manuelles.csv")) {
-  brut <- readxl::read_excel(chemin, guess_max = 20000)
+  brut <- lire_classeur(chemin)
   manquantes <- setdiff(COL_ATTENDUES, names(brut))
   if (length(manquantes)) stop("Colonnes absentes : ", paste(manquantes, collapse = ", "))
   n_brut <- nrow(brut)

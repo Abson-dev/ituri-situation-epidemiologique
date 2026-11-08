@@ -14,7 +14,7 @@ mod_annees_ui <- function(id, app) {
   if (!length(app$historique)) {
     return(page(entete, div(class = "attention", bsicons::bs_icon("info-circle-fill"),
       div(strong("Les données des années passées ne sont pas encore chargées."),
-          div(class = "detail", "Déposer les bases reçues dans data/raw/historique/, sous la forme Base_DPS_Ituri_2024.xlsx, puis relancer. Aucune donnée synthétique n'est utilisée avec les données réelles.")))))
+          div(class = "detail", "Déposer les bases reçues dans data/raw/, avec l'année dans le nom (IDSR 2025_WEEK52.xls), puis relancer. Aucune donnée synthétique n'est utilisée avec les données réelles.")))))
   }
   page(
     entete,

@@ -4,7 +4,7 @@ PROVINCE <- "__PROVINCE__"
 
 charger_app <- function() {
   # Sans base réelle (clone du dépôt), l'application démarre sur les données synthétiques.
-  reel <- length(list.files(here::here("data/raw"), pattern = "\\.xlsx$")) > 0
+  reel <- length(list.files(here::here("data/raw"), pattern = "\\.xlsx?$", ignore.case = TRUE)) > 0
   if (!reel) Sys.setenv(ITURI_DEMO = "1")
   cfg <- lire_config()
   if (mode_demo() && !dir.exists(here::here("data/synthetic/raw"))) generer_donnees_synthetiques(cfg)
