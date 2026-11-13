@@ -47,11 +47,85 @@ trouver_base <- function(cfg, semaine = NULL, dossier = chemin_donnees("raw")) {
   x$chemin[i]
 }
 
-# Certains .xls reçus sont en réalité des .xlsx : le format est lu dans le fichier, pas dans son nom.
+# Le format est lu dans le fichier, pas dans son nom : certains .xls reçus sont des .xlsx, d'autres sont
+# au format Excel 2.x (BIFF2), que readxl ne lit pas.
 lire_classeur <- function(chemin) {
   format <- readxl::format_from_signature(chemin)
-  if (is.na(format)) stop("Fichier illisible comme classeur Excel : ", basename(chemin), call. = FALSE)
-  if (format == "xlsx") readxl::read_xlsx(chemin, guess_max = 20000) else readxl::read_xls(chemin, guess_max = 20000)
+  if (!is.na(format)) {
+    return(if (format == "xlsx") readxl::read_xlsx(chemin, guess_max = 20000) else readxl::read_xls(chemin, guess_max = 20000))
+  }
+  entete <- readBin(chemin, "raw", 2L)
+  if (identical(entete, as.raw(c(0x09, 0x00)))) return(lire_biff2(chemin))
+  stop("Fichier illisible comme classeur Excel : ", basename(chemin),
+       ". L'ouvrir dans Excel et l'enregistrer au format .xlsx.", call. = FALSE)
+}
+
+# Excel 2.x : une suite d'enregistrements (type, longueur, données). Seuls les nombres (0x0003) et les
+# textes (0x0004) sont lus ; tout autre type de cellule arrête la lecture plutôt que de perdre des valeurs.
+lire_biff2 <- function(chemin, codage = "CP1252") {
+  b <- readBin(chemin, "raw", file.size(chemin))
+  n <- length(b)
+  u16 <- function(i) as.integer(b[i]) + 256L * as.integer(b[i + 1L])
+  pos <- integer(n %/% 4L)
+  type <- integer(n %/% 4L)
+  k <- 0L
+  p <- 1L
+  while (p + 3L <= n) {
+    k <- k + 1L
+    pos[k] <- p
+    type[k] <- u16(p)
+    p <- p + 4L + u16(p + 2L)
+  }
+  if (p != n + 1L) stop("Fichier Excel 2.x tronqué : ", basename(chemin), call. = FALSE)
+  pos <- pos[seq_len(k)]
+  type <- type[seq_len(k)]
+  autres <- intersect(type, c(0x0001L, 0x0002L, 0x0005L, 0x0006L, 0x0007L))
+  if (length(autres)) {
+    stop("Fichier Excel 2.x avec des cellules non prises en charge (", paste(sprintf("0x%04X", autres), collapse = ", "),
+         ") : l'enregistrer au format .xlsx.", call. = FALSE)
+  }
+  pn <- pos[type == 0x0003L]
+  pl <- pos[type == 0x0004L]
+  if (!length(pn) || !length(pl)) stop("Fichier Excel 2.x sans nombres ou sans textes : ", basename(chemin), call. = FALSE)
+  octets <- function(debut, taille) b[as.vector(t(outer(debut, 0:(taille - 1L), "+")))]
+  valeurs <- readBin(octets(pn + 11L, 8L), "double", n = length(pn), size = 8L, endian = "little")
+  textes <- vapply(pl, function(q) {
+    m <- as.integer(b[q + 11L])
+    if (m) rawToChar(b[(q + 12L):(q + 11L + m)]) else ""
+  }, character(1))
+  # Comme readxl : espaces de bord retirés, texte vide lu comme valeur manquante.
+  textes <- trimws(iconv(textes, codage, "UTF-8"))
+  textes[!nzchar(textes)] <- NA_character_
+  # Un nombre manquant est écrit comme NaN : c'est une cellule vide.
+  valeurs[is.nan(valeurs)] <- NA_real_
+  cellules <- rbind(
+    data.frame(ligne = u16(pn + 4L), col = u16(pn + 6L), num = valeurs, txt = NA_character_),
+    data.frame(ligne = u16(pl + 4L), col = u16(pl + 6L), num = NA_real_, txt = textes)
+  )
+  l0 <- min(cellules$ligne)
+  tete <- cellules[cellules$ligne == l0, ]
+  if (anyNA(tete$txt)) stop("Fichier Excel 2.x : la première ligne doit contenir les noms de colonnes.", call. = FALSE)
+  corps <- cellules[cellules$ligne > l0, ]
+  lignes <- sort(unique(corps$ligne))
+  i <- match(corps$ligne, lignes)
+  sortie <- lapply(sort(tete$col), function(j) {
+    x <- corps[corps$col == j, ]
+    # Une colonne sans aucun texte non vide est numérique.
+    if (all(is.na(x$txt))) {
+      v <- rep(NA_real_, length(lignes))
+      v[i[corps$col == j]] <- x$num
+    } else {
+      v <- rep(NA_character_, length(lignes))
+      v[i[corps$col == j]] <- ifelse(!is.na(x$txt), x$txt,
+                                     ifelse(is.na(x$num), NA_character_, format(x$num, scientific = FALSE, trim = TRUE)))
+    }
+    v
+  })
+  names(sortie) <- tete$txt[order(tete$col)]
+  d <- tibble::as_tibble(sortie)
+  # Les dates Excel sont des nombres de jours depuis le 30 décembre 1899.
+  if (is.numeric(d$debutsem)) d$debutsem <- as.POSIXct(as.Date(d$debutsem, origin = "1899-12-30"), tz = "UTC")
+  d
 }
 
 COL_CAS <- c("c328tnn", "c011mois", "c1259mois", "c515ans", "cp15ans")
